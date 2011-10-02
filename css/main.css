@@ -1,0 +1,54 @@
+﻿body {
+    background: #000;
+    font-family: "Trebuchet Ms", Helvetica, Arial, Verdana;
+    font-size: 13px;
+    color: #fff;
+}
+
+#wrapper {
+    margin: 0 auto;
+    width: 640px;
+}
+
+h1 {
+    text-align: center;
+}
+
+p {
+    text-align: center;
+}
+
+footer {
+    text-align: center;
+    margin-top: 10px;
+    border-top: 1px solid #CCCCCC;
+    padding-top: 10px;
+    clear: both;
+}
+
+a {
+    color: #ccc;
+}
+
+#settings {
+    float: left;
+    margin-top: 8px;
+}
+
+#keys {
+    float: right;
+    margin-bottom: 10px;
+}
+
+div.keys {
+    width: 32px;
+    height: 32px;
+    background: #fff;
+    cursor: pointer;
+    float: left;
+    margin-left: 10px;
+    text-align: center;
+    font-weight: bold;
+    color: #000;
+    line-height: 29px;
+}

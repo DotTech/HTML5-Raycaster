@@ -1,0 +1,59 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <title>HTML5 Raycaster Demo</title>
+    
+    
+    
+    <link type="text/css" href="css/main.css" rel="stylesheet" />
+    
+    <!--[if lt IE 9]>
+        <script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <script type="text/javascript" src="js/jquery-1.6.4.min.js"></script>
+    <script type="text/javascript" src="js/raycaster.js"></script>
+    
+</head>
+<body>
+
+    <div id="wrapper">
+        
+        <h1>HTML5 Raycaster Demo</h1>
+        <p>
+            If you don't see anything, you should update your browser...<br />
+            Use the arrow keys to navigate through the level.<br />
+            <br />
+            Download javascript source here: <a href="js/raycaster.js">raycaster.js</a> (requires jQuery)
+        </p>
+        
+        <canvas id="screen" width="640" height="320"></canvas>
+        
+        <div id="settings">
+            <input type="checkbox" id="chkTextures" value="true" checked="checked" />
+            <label for="chkTextures">textures</label>
+            
+            <input type="checkbox" id="chkLighting" value="true" checked="checked" />
+            <label for="chkLighting">lighting</label>
+            
+            <input type="checkbox" id="chkShadow" value="true" checked="checked" />
+            <label for="chkShadow">shadow</label>
+            
+
+        </div>
+        
+        <div id="keys">
+            <div id="keyLeft" data-code="37" class="keys">&larr;</div>
+            <div id="keyUp" data-code="38" class="keys">&uarr;</div>
+            <div id="keyDown" data-code="40" class="keys">&darr;</div>
+            <div id="keyRight" data-code="39" class="keys">&rarr;</div>
+        </div>
+        
+        <footer>
+            Version 0.2, created by <a href="http://www.dottech.nl">Ruud van Falier</a> in 2011
+        </footer>
+        
+    </div>
+
+</body>
+</html>
