@@ -159,13 +159,13 @@ var raycaster = function()
         settings:
         {
             renderTextures: function() {
-                return $("#chkTextures").is(':checked');
+                return document.getElementById("chkTextures").checked;
             },
             renderLighting: function() {
-                return $("#chkLighting").is(':checked');
+                return document.getElementById("chkLighting").checked;
             },
             renderShadow: function() {
-                return $("#chkShadow").is(":checked");
+                return document.getElementById("chkShadow").checked;
             }
         },
         
@@ -603,23 +603,24 @@ var raycaster = function()
                 }
             };
             
-            $(window).keydown(keyDownHandler);
-            $(window).keyup(keyUpHandler);
+            window.addEventListener('keydown', keyDownHandler, false);
+            window.addEventListener('keyup', keyUpHandler, false);
             
             // Bind key icons for mobile support
-            $("div.keys").each(function() {
-                var keyCode = parseInt($(this).attr("data-code"));
-                
-                $(this).mouseenter(function () {
+            var keys = document.getElementsByClassName("keys");
+
+            for (var i = 0, n = keys.length; i < n; ++i) {
+                var key = keys[i];
+                var keyCode = parseInt(key.getAttribute("data-code"), 0);
+                key.addEventListener('mouseenter', function() {
                     keyDownHandler({ keyCode: keyCode });
                     return false;
-                });
-                
-                $(this).mouseleave(function () {
+                }, false);
+                key.addEventListener('mouseleave', function() {
                     keyUpHandler({ keyCode: keyCode });
                     return false;
-                });
-            });
+                }, false);
+            }
         };
         
         return {
@@ -655,6 +656,6 @@ var raycaster = function()
     };
 }();
 
-$(function() {
+document.addEventListener("DOMContentLoaded", function() {
     raycaster.init("screen");
-});
+}, true);
