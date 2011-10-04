@@ -206,6 +206,8 @@ var raycaster = function()
         // Reference to the canvas context
         context: null,
         
+		redrawScreen: true,
+		
         gameloopInterval: null,
         
         // Array with Image objects containing the textures
@@ -523,8 +525,11 @@ var raycaster = function()
         // Execute all rendering tasks
         var update = function()
         {
-            drawWorld();
-            drawMiniMap();
+			if (objects.redrawScreen) {
+				drawWorld();
+				drawMiniMap();
+				objects.redrawScreen = false;
+			}
         }
         
         // Expose public members
@@ -539,6 +544,7 @@ var raycaster = function()
         var turn = function(angle)
         {
             objects.player.angle.turn(angle);
+			objects.redrawScreen = true;
         };
         
         var walk = function(forward)
@@ -554,6 +560,8 @@ var raycaster = function()
                 objects.player.x += deltaX;
                 objects.player.y -= deltaY;
             }
+			
+			objects.redrawScreen = true;
         };
         
         // Update movement
@@ -619,6 +627,10 @@ var raycaster = function()
                     keyUpHandler({ keyCode: keyCode });
                     return false;
                 });
+            });
+            
+            $("#settings input[type=checkbox]").change(function() {
+                objects.redrawScreen = true;
             });
         };
         
