@@ -5,8 +5,9 @@
     Very basic raycasting engine with texture mapping support.
     Feel free to use for whatever you need it for.
     
-    Version: 0.2
+    Version: 0.3
     Author: Ruud van Falier
+    Thanks to: James Abley (https://github.com/jabley) for removing jQuery dependency
     
     ruud@dottech.nl
     http://www.dottech.nl
@@ -207,6 +208,8 @@ var raycaster = function()
         context: null,
         
         gameloopInterval: null,
+        
+        redrawScreen: true,
         
         // Array with Image objects containing the textures
         textures: null,
@@ -520,15 +523,24 @@ var raycaster = function()
             }
         };
         
+        var redraw = function()
+        {
+            objects.redrawScreen = true;
+        }
+        
         // Execute all rendering tasks
         var update = function()
         {
-            drawWorld();
-            drawMiniMap();
+            if (objects.redrawScreen) {
+                drawWorld();
+                drawMiniMap();
+                objects.redrawScreen = false;
+            }
         }
         
         // Expose public members
         return {
+            redraw: redraw,
             update: update
         };
     }();
@@ -539,6 +551,7 @@ var raycaster = function()
         var turn = function(angle)
         {
             objects.player.angle.turn(angle);
+            rendering.redraw();
         };
         
         var walk = function(forward)
@@ -554,6 +567,8 @@ var raycaster = function()
                 objects.player.x += deltaX;
                 objects.player.y -= deltaY;
             }
+            
+            rendering.redraw();
         };
         
         // Update movement
@@ -621,6 +636,11 @@ var raycaster = function()
                     return false;
                 }, false);
             }
+            
+            // Redraw when settings change
+            document.getElementById("chkTextures").addEventListener('change', rendering.redraw);
+            document.getElementById("chkLighting").addEventListener('change', rendering.redraw);
+            document.getElementById("chkShadow").addEventListener('change', rendering.redraw);
         };
         
         return {
