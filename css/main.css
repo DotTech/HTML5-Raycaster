@@ -35,6 +35,10 @@ a {
     margin-top: 8px;
 }
 
+label[for=ddlQuality] {
+    margin-left: 20px;
+}
+
 #keys {
     float: right;
     margin-bottom: 10px;

@@ -5,9 +5,15 @@
     Very basic raycasting engine with texture mapping support.
     Feel free to use for whatever you need it for.
     
-    Version: 0.3
+    Version: 0.4
     Author: Ruud van Falier
-    Thanks to: James Abley (https://github.com/jabley) for removing jQuery dependency
+    
+    Changelog:
+    (v0.2) Initial release.
+    (v0.3) Redraw only when player has moved or settings have changed.
+           Removed jQuery dependency (thanks to James Abley (https://github.com/jabley))
+    (v0.4) Added quality setting which makes raycasting use lesser rays.
+           Maps now consist of walls that are not blocks and dont have to be aligned on a grid.
     
     ruud@dottech.nl
     http://www.dottech.nl
@@ -18,8 +24,8 @@ var raycaster = function()
     // Game constants
     var constants =
     {
-        mapBlockSize: 5,    // Size of walls on the mini map
-        wallSize: 64,       // Size of walls in the game world
+        mapBlockSize: 40,    // Size of wallsGrid on the mini map
+        wallSize: 64,       // Size of wallsGrid in the game world
         fieldOfView: 66,    // Field of view of the player (in degrees)
         screenWidth: 640,   // Width of the viewport
         screenHeight: 320,  // Height of the viewport
@@ -51,17 +57,29 @@ var raycaster = function()
             };
         },
         
-        // Defines a wall that is found during raycasting
+        vector: function(x1, y1, x2, y2)
+        {
+            return {
+                x1: x1,
+                y1: y1,
+                x2: x2,
+                y2: y2
+            };
+        },
+        
+        // Defines a wall on the grid that is found during raycasting
         wall: function() 
         {
             return {
                 x: 0,                   // X coordinate of this wall
                 y: 0,                   // Y coordinate of this wall
+                gridX: 0,               // X index of this wall on the wallsGrid array
+                gridY: 0,               // Y index of this wall on the wallsGrid array
                 intersectsWithX: false, // Ray intersected on the X-axis?
                 intersectsWithY: false, // Ray intersected on the Y-axis?
                 distance: 0,            // Distance to the wall
                 textureIndex: 0,        // index of texture for this wall
-                textureX: 0             // X coordinate of the texture scanline to draw
+                textureX: 0,            // X coordinate of the texture scanline to draw
             }
         },
         
@@ -145,9 +163,9 @@ var raycaster = function()
         // Defines player values
         player: 
         {
-            x: 100,
-            y: 100,
-            angle: new classes.angle(290)
+            x: 500,
+            y: 500,
+            angle: new classes.angle(110)
         },
         
         centerOfScreen: 
@@ -167,33 +185,30 @@ var raycaster = function()
             },
             renderShadow: function() {
                 return document.getElementById("chkShadow").checked;
+            },
+            renderQuality: function() {
+                var e = document.getElementById("ddlQuality");
+                return parseInt(e.options[e.selectedIndex].value);
             }
         },
         
-        // Definition of the world map
-        walls: 
-        [
-            [ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 6, 6, 6, 6, 6, 6 ],
-            [ 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 7, 0, 7, 6, 0, 0, 0, 0, 6 ],
-            [ 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 7, 0, 7, 6, 0, 0, 0, 0, 6 ],
-            [ 1, 0, 0, 0, 0, 0, 0, 6, 6, 0, 0, 7, 0, 7, 6, 0, 0, 0, 0, 6 ],
-            [ 1, 0, 0, 0, 0, 0, 0, 3, 6, 0, 0, 7, 7, 7, 6, 3, 0, 0, 3, 6 ],
-            [ 1, 0, 0, 0, 0, 0, 0, 6, 6, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4 ],
-            [ 1, 0, 0, 0, 0, 0, 0, 6, 6, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4 ],
-            [ 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4 ],
-            [ 1, 0, 0, 0, 6, 6, 0, 0, 0, 0, 0, 2, 0, 2, 2, 4, 4, 4, 0, 4 ],
-            [ 1, 0, 0, 6, 0, 6, 0, 0, 0, 2, 2, 2, 0, 2, 0, 0, 0, 4, 0, 4 ],
-            [ 1, 0, 6, 0, 0, 6, 0, 0, 0, 2, 0, 0, 0, 2, 0, 0, 0, 4, 0, 4 ],
-            [ 1, 0, 6, 6, 6, 6, 0, 0, 0, 2, 0, 2, 2, 2, 0, 0, 0, 4, 0, 4 ],
-            [ 1, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 1, 0, 0, 0, 4 ],
-            [ 1, 0, 0, 2, 2, 2, 2, 0, 2, 2, 0, 0, 0, 1, 0, 1, 0, 0, 0, 4 ],
-            [ 1, 0, 5, 0, 0, 0, 0, 0, 0, 7, 0, 0, 0, 1, 0, 1, 1, 4, 0, 4 ],
-            [ 1, 0, 5, 0, 0, 0, 0, 0, 0, 0, 7, 0, 0, 1, 0, 0, 0, 4, 0, 4 ],
-            [ 1, 0, 0, 5, 0, 0, 0, 0, 0, 0, 7, 0, 0, 1, 0, 0, 0, 4, 0, 4 ],
-            [ 1, 0, 0, 0, 5, 5, 5, 5, 5, 0, 0, 0, 0, 1, 1, 1, 1, 4, 0, 4 ],
-            [ 1, 0, 0, 0, 0, 0, 0, 0, 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4 ],
-            [ 1, 5, 5, 5, 5, 5, 5, 5, 5, 1, 1, 1, 1, 1, 1, 1, 1, 4, 4, 4 ]
+        // Define walls in the world, make sure they are connected and there are no holes left in it
+        walls: [
+            new classes.vector(128, 300, 640, 128),
+            new classes.vector(640, 128, 1100, 168),
+            new classes.vector(1100, 168, 1800, 900),
+            new classes.vector(1800, 900, 1860, 1700),
+            new classes.vector(1860, 1700, 1500, 1900),
+            new classes.vector(1500, 1900, 300, 1800),
+            new classes.vector(300, 1800, 128, 300),
+            new classes.vector(1100, 468, 1600, 1300),
+            new classes.vector(1600, 1300, 1440, 1300),
+            new classes.vector(1440, 1300, 700, 700),
+            new classes.vector(700, 700, 1100, 468),
         ],
+        
+        // The wallgrid will be generated to provide a quick way to search for approximate wall intersections
+        wallsGrid: new Array(),
         
         // Definition of keyboard buttons
         keys: {
@@ -210,7 +225,7 @@ var raycaster = function()
         gameloopInterval: null,
         
         redrawScreen: true,
-        
+                
         // Array with Image objects containing the textures
         textures: null,
         
@@ -222,12 +237,54 @@ var raycaster = function()
                 objects.textures[i] = new Image();
                 objects.textures[i].src = constants.texturesFiles[i];
             }
+        },
+        
+        // Loops through all grids and finds walls that insersect with them
+        loadWallsGrid: function()
+        {
+            // Create the empty grid
+            for (var y = 0; y < 30; y++) {
+                objects.wallsGrid[y] = new Array();
+                for (var x = 0; x < 30; x++) {
+                    objects.wallsGrid[y][x] = new Array();
+                }
+            }
+            
+            // Load the walls into a grid array that we use to speed up the raycasting
+            for (var i in objects.walls) {
+                var wall = objects.walls[i],
+                    os = wall.y2 - wall.y1,
+                    cs = wall.x2 - wall.x1,
+                    y = wall.y1,
+                    deltaY = os / cs;
+                
+                // Follow the line of the wall and mark the grid cells that it intersects with
+                if (cs > 0) {
+                    for (var x = wall.x1; x < wall.x1 + cs; x++) {
+                        var ix = parseInt(x / constants.wallSize),
+                            iy = parseInt(y / constants.wallSize);
+                            
+                        objects.wallsGrid[iy][ix][objects.wallsGrid[iy][ix].length] = new classes.point(x, parseInt(y));;
+                        y += deltaY;
+                    }
+                }
+                else if (cs < 0) {
+                    for (var x = wall.x1; x > wall.x1 + cs; x--) {
+                        var ix = parseInt(x / constants.wallSize),
+                            iy = parseInt(y / constants.wallSize);
+                            
+                        objects.wallsGrid[iy][ix][objects.wallsGrid[iy][ix].length] = new classes.point(x, parseInt(y));;
+                        y -= deltaY;
+                    }
+                }
+            }
         }
     };
 
     // Contains all functions related to rendering
     var rendering = function()
     {
+        /****************** / Namespaces / ******************/
         // Basic drawing functions
         var drawing = 
         {
@@ -283,13 +340,14 @@ var raycaster = function()
             
             lineSquare: function(x, y, x2, y2, color)
             {
-                drawing.square(x, y, 1, y2 - y, color);
+                drawing.square(x, y, x2, y2 - y, color);
             }
         };
         
         // Raycasting functions
         var raycasting = function()
         {
+            /****************** / Private methods / ******************/
             // Converts world coordinates to map coordinates (array indexes)
             var coordsToMap = function(coordX, coordY)
             {
@@ -300,18 +358,18 @@ var raycaster = function()
             var isOutOfBounds = function(coordX, coordY)
             {
                 var mapPoint = coordsToMap(coordX, coordY);
-                return mapPoint.y < 0 || mapPoint.y >= objects.walls.length
-                   || mapPoint.x < 0 || mapPoint.x >= objects.walls[0].length;
+                return mapPoint.y < 0 || mapPoint.y >= objects.wallsGrid.length
+                   || mapPoint.x < 0 || mapPoint.x >= objects.wallsGrid[0].length;
             };
             
-            // Determines wether specified world coordinates contains a wall
+            // Determines wether specified world coordinates contains a wall in the wallsGrid array
             var containsWall = function(coordX, coordY)
             {
                 var mapPoint = coordsToMap(coordX, coordY);
-                return !isOutOfBounds(coordX, coordY) && objects.walls[mapPoint.y][mapPoint.x] != 0;
+                return !isOutOfBounds(coordX, coordY) && objects.wallsGrid[mapPoint.y][mapPoint.x].length > 0;
             };
             
-            // Choose the wall nearest to the player
+            // Choose the nearest wall to the player from wallsGrid 
             var chooseNearest = function(angle, wallX, wallY)
             {
                 if (wallX != null) {
@@ -332,8 +390,9 @@ var raycaster = function()
                 return (wallX.distance < wallY.distance) ? wallX : wallY;
             };
             
-            // Use raycasting to find the nearest wall at the specified angle
-            var findWall = function(angle)
+            /****************** / Public methods / ******************/
+            // Use raycasting to find the nearest wall on the wallsGrid at the specified angle
+            var findWallOnGrid = function(angle)
             {
                 var angleTan = Math.tan(angle.toRadians()),
                     deltaX = constants.wallSize / angleTan,
@@ -390,35 +449,118 @@ var raycaster = function()
                 return chooseNearest(angle, wallX, wallY);
             };
             
+            // Once we found a wall on the grid, we cast deeper into the grid (pixel-by-pixel) until we hit a vector wall intersection
+            var findVectorWall = function(angle, wallOnGrid)
+            {
+                var angleTan = Math.tan(angle.toRadians()),
+                    deltaX = 0.5 / angleTan,
+                    deltaY = 0.5 * angleTan,
+                    wall = new classes.wall(),
+                    found = false;
+                
+                if (angle.facingSouth()) {
+                    deltaX = -deltaX;
+                }
+                
+                if (angle.facingEast()) {
+                    deltaY = -deltaY;
+                }
+                
+                // Determine starting point for pixel-perfect raycast
+                var startX = objects.player.x + Math.floor(Math.cos(angle.toRadians()) * wallOnGrid.distance),
+                    startY = objects.player.y - Math.floor(Math.sin(angle.toRadians()) * wallOnGrid.distance);
+                
+                //drawing.circle(10 + startX / parseFloat(constants.wallSize / constants.mapBlockSize),
+                //               10 + startY / parseFloat(constants.wallSize / constants.mapBlockSize), 3, "rgb(255,0,0)");
+                
+                wall.y = startY;
+                wall.x = startX;
+                
+                while (wall == null || !found) {
+                    wall.x += deltaX;
+                    wall.y += deltaY;
+                    var gridindex = coordsToMap(parseInt(wall.x), parseInt(wall.y));
+                    
+                    if (gridindex.y >= 0 && gridindex.y < objects.wallsGrid.length && gridindex.x >= 0 && gridindex.x < objects.wallsGrid[0].length) {
+                        
+                        for (var i in objects.wallsGrid[gridindex.y][gridindex.x]) {
+                            var points = objects.wallsGrid[gridindex.y][gridindex.x][i];
+                            
+                            if ((parseInt(wall.x) == points.x && parseInt(wall.y) == points.y) 
+                                || (parseInt(wall.x - 1) == points.x && parseInt(wall.y) == points.y)
+                                || (parseInt(wall.x - 1) == points.x && parseInt(wall.y - 1) == points.y)
+                                || (parseInt(wall.x - 1) == points.x && parseInt(wall.y + 1) == points.y)                                
+                                || (parseInt(wall.x + 1) == points.x && parseInt(wall.y + 1) == points.y)
+                                || (parseInt(wall.x + 1) == points.x && parseInt(wall.y) == points.y)
+                                || (parseInt(wall.x + 1) == points.x && parseInt(wall.y - 1) == points.y)) {
+                                found = true;
+                                
+                                wall.distance = Math.abs(Math.abs(objects.player.x - wall.x) / Math.cos(angle.toRadians()));
+                                wall.textureId = 1;
+                                wall.textureX = 0;
+                                wall.intersectsWithX = false;
+                                
+                                return wall;
+                                console.log("FOOOOOOOOOUUUUUUUUUUUUUUND!");
+                            }
+                        }
+                    }
+                    else {
+                    //if (wall.x < 10 || wall.y < 10)
+                        found = true;
+                    }
+                }
+                
+                return wallOnGrid;
+            };
+            
             // Expose public members
             return {
-                findWall: findWall
+                findWallOnGrid: findWallOnGrid,
+                findVectorWall: findVectorWall
             };
         }();
         
+        /****************** / Private methods / ******************/
         // Draw the mini map
         var drawMiniMap = function() 
         {
             // Map is smaller than world, determine shrink factor
-            var shrinkFactor = parseFloat(constants.wallSize / constants.mapBlockSize);
-            
-            var mapOffsetX = 10,
-                mapOffsetY = 10;
+            var shrinkFactor = parseFloat(constants.wallSize / constants.mapBlockSize),
+                mapOffsetX = 10,
+                mapOffsetY = 10,
+                odd = false;
             
             // Draw white background
             drawing.square(mapOffsetX, mapOffsetY, 
-                           objects.walls[0].length * constants.mapBlockSize, objects.walls.length * constants.mapBlockSize, 
+                           objects.wallsGrid[0].length * constants.mapBlockSize, objects.wallsGrid.length * constants.mapBlockSize, 
                            drawing.colorRgb(255, 255, 255));
             
-            // Draw walls
-            for (var y = 0; y < objects.walls.length; y++) {
-                for (var x = 0; x < objects.walls[0].length; x++) {
-                    if (objects.walls[y][x] != 0) {
+            // Draw the minimap
+            for (var y = 0; y < objects.wallsGrid.length; y++) {
+                for (var x = 0; x < objects.wallsGrid[0].length; x++) {
+                    // Draw grid square
+                    drawing.square(mapOffsetX + x * constants.mapBlockSize, mapOffsetY + y * constants.mapBlockSize, 
+                                       constants.mapBlockSize, constants.mapBlockSize, 
+                                       odd ? drawing.colorRgb(240, 240, 240) : drawing.colorRgb(255, 255, 255));
+                    
+                    // Draw wall square
+                    if (objects.wallsGrid[y][x].length > 0) {
                         drawing.square(mapOffsetX + x * constants.mapBlockSize, mapOffsetY + y * constants.mapBlockSize, 
                                        constants.mapBlockSize, constants.mapBlockSize, 
-                                       drawing.colorRgb(0, 0, 0));
+                                       drawing.colorRgb(190, 190, 190));
                     }
+                    
+                    odd = !odd;
                 }
+                odd = !odd;
+            }
+            
+            // Draw the walls
+            for (var i in objects.walls) {
+                var wall = objects.walls[i];
+                drawing.line(mapOffsetX + wall.x1 / shrinkFactor, mapOffsetY + wall.y1 / shrinkFactor, 
+                             mapOffsetX + wall.x2 / shrinkFactor, mapOffsetY + wall.y2 / shrinkFactor, drawing.colorRgb(0, 0, 0));
             }
             
             // Draw player
@@ -427,18 +569,22 @@ var raycaster = function()
                 
             drawing.circle(playerX, playerY, constants.mapBlockSize / 2, drawing.colorRgb(255, 0, 0));
             
-            // Visualize the raycasting
-            var angle = new classes.angle(objects.player.angle.getValue() + constants.fieldOfView / 2);
-            for (var i = 0; i < constants.screenWidth; i++) 
+            
+            var angle = new classes.angle(objects.player.angle.getValue() + constants.fieldOfView / 2),
+                rayStep = 10;
+            
+            // Visualize the raycasting on the map
+            for (var i = 0; i < constants.screenWidth; i += rayStep) 
             {
-                var wall = raycasting.findWall(angle),
+                var wallOnGrid = raycasting.findWallOnGrid(angle),
+                    wall = raycasting.findVectorWall(angle, wallOnGrid),
                     deltaX = Math.floor(Math.cos(angle.toRadians()) * (wall.distance / shrinkFactor)),
                     deltaY = Math.floor(Math.sin(angle.toRadians()) * (wall.distance / shrinkFactor));
                 
                 drawing.line(playerX, playerY, 
-                             playerX + deltaX, playerY - deltaY, drawing.colorRgb(200, 200, 200));
+                             playerX + deltaX, playerY - deltaY, drawing.colorRgb(200, 200, 0));
                 
-                angle.turn(-constants.angleBetweenRays);
+                angle.turn(-constants.angleBetweenRays * rayStep);
             }
         };
         
@@ -451,10 +597,14 @@ var raycaster = function()
             
             var angle = new classes.angle(objects.player.angle.getValue() + constants.fieldOfView / 2);
             
-            // Draw vertical scanlines for each 1px of the screen
-            for (var i = 0; i < constants.screenWidth; i++) 
+            // Scanline width of 1px gives the best quality, but costs most performance
+            var scanlineWidth = objects.settings.renderQuality();
+            
+            // Draw the world as vertical scanlines
+            for (var i = 0; i < constants.screenWidth; i += scanlineWidth) 
             {
-                var wall = raycasting.findWall(angle);
+                var wallOnGrid = raycasting.findWallOnGrid(angle);
+                var wall = raycasting.findVectorWall(angle, wallOnGrid);
                 
                 // Remove distortion (counter fishbowl effect)
                 var distortRemove = new classes.angle(constants.fieldOfView / 2);
@@ -477,52 +627,55 @@ var raycaster = function()
                 if (objects.settings.renderTextures()) {
                     // Determine which texture to use on this wall
                     var wallindex = new classes.point(parseInt(wall.y / constants.wallSize), parseInt(wall.x / constants.wallSize));
-                    wall.textureIndex = objects.walls[parseInt(wall.y / constants.wallSize)][parseInt(wall.x / constants.wallSize)];
+                    wall.textureIndex = objects.wallsGrid[parseInt(wall.y / constants.wallSize)][parseInt(wall.x / constants.wallSize)];
                     wall.textureX = wall.intersectsWithX 
                         ? parseInt(wall.x % constants.wallSize) 
                         : parseInt(wall.y % constants.wallSize);
                         
                     // The visible scale of a wall compared to its original size
-                    var wallScale = wallHeight / constants.wallSize;
+                    var wallsGridcale = wallHeight / constants.wallSize;
                         
-                    var offsetY = (skipPixels > 0) ? skipPixels / wallScale : 0;
+                    var offsetY = (skipPixels > 0) ? skipPixels / wallsGridcale : 0;
                     if (offsetY >= constants.wallSize / 2) {
                         offsetY = constants.wallSize / 2 - 1;
                     }
                     
-                    objects.context.drawImage(objects.textures[wall.textureIndex], 
-                                              wall.textureX, offsetY, 1, constants.wallSize - offsetY * 2,
-                                              i, scanlineStartY, 1, scanlineEndY - scanlineStartY);
+                    // Draw the texture
+                    /*objects.context.drawImage(objects.textures[wall.textureIndex], 
+                                              wall.textureX, offsetY, scanlineWidth, constants.wallSize - offsetY * 2,
+                                              i, scanlineStartY, scanlineWidth, scanlineEndY - scanlineStartY);*/
                 }
                 else {
                     // Draw without textures
-                    drawing.lineSquare(i, scanlineStartY,  i, scanlineEndY, drawing.colorRgb(128, 0, 0));
+                    drawing.lineSquare(i, scanlineStartY,  scanlineWidth, scanlineEndY, drawing.colorRgb(128, 0, 0));
                 }
                 
-                // Make one side of the walls darker to create a shadow effect
+                // Make one side of the wallsGrid darker to create a shadow effect
                 // This is achieved by drawing a black scanline with 50% opacity
-                if (objects.settings.renderShadow()) {
-                    if (wall.intersectsWithX) {
-                        drawing.lineSquare(i, scanlineStartY,  i, scanlineEndY, drawing.colorRgba(0, 0, 0, 0.5))
-                    }
-                }
+                //if (objects.settings.renderShadow()) {
+                //    if (wall.intersectsWithX) {
+                //        drawing.lineSquare(i, scanlineStartY, scanlineWidth, scanlineEndY, drawing.colorRgba(0, 0, 0, 0.5))
+                //    }
+                //}
                 
-                // Make walls in the distance appear darker
+                // Make wallsGrid in the distance appear darker
                 if (objects.settings.renderLighting()) {
                     if (wall.distance > 100) {
                         var colorDivider = parseFloat(wall.distance / 200); 
                         colorDivider = (colorDivider > 5) ? 5 : colorDivider;
                         var opacity = parseFloat(1 - 1 / colorDivider);
                         
-                        drawing.lineSquare(i, scanlineStartY,  i, scanlineEndY, drawing.colorRgba(0, 0, 0, opacity))
+                        drawing.lineSquare(i, scanlineStartY, scanlineWidth, scanlineEndY, drawing.colorRgba(0, 0, 0, opacity))
                     }
                 }
                 
                 // Move on to next scanline
-                angle.turn(-constants.angleBetweenRays);
+                angle.turn(-constants.angleBetweenRays * scanlineWidth);
             }
         };
         
+        /****************** / Public methods / ******************/
+        // Tell renderer that a redraw is required
         var redraw = function()
         {
             objects.redrawScreen = true;
@@ -532,7 +685,7 @@ var raycaster = function()
         var update = function()
         {
             if (objects.redrawScreen) {
-                drawWorld();
+                //drawWorld();
                 drawMiniMap();
                 objects.redrawScreen = false;
             }
@@ -548,12 +701,15 @@ var raycaster = function()
     // Contains all movement related functions
     var movement = function()
     {
+        /****************** / Private methods / ******************/
+        // Make the player turn by increasing its viewing angle
         var turn = function(angle)
         {
             objects.player.angle.turn(angle);
             rendering.redraw();
         };
         
+        // Make the player walk forward or backwards
         var walk = function(forward)
         {
             step = forward ? constants.movementStep : -constants.movementStep;
@@ -563,7 +719,7 @@ var raycaster = function()
                 newMapX = parseInt((objects.player.x + deltaX) / constants.wallSize),
                 newMapY = parseInt((objects.player.y - deltaY) / constants.wallSize);
             
-            if (objects.walls[newMapY][newMapX] == 0) {
+            if (objects.wallsGrid[newMapY][newMapX].length == 0) {
                 objects.player.x += deltaX;
                 objects.player.y -= deltaY;
             }
@@ -571,6 +727,7 @@ var raycaster = function()
             rendering.redraw();
         };
         
+        /****************** / Public methods / ******************/
         // Update movement
         var update = function()
         {
@@ -641,6 +798,7 @@ var raycaster = function()
             document.getElementById("chkTextures").addEventListener('change', rendering.redraw);
             document.getElementById("chkLighting").addEventListener('change', rendering.redraw);
             document.getElementById("chkShadow").addEventListener('change', rendering.redraw);
+            document.getElementById("ddlQuality").addEventListener('change', rendering.redraw);
         };
         
         return {
@@ -660,6 +818,9 @@ var raycaster = function()
         
         // Load texture files
         objects.loadTextures();
+        
+        // Load the wall map
+        objects.loadWallsGrid();
         
         // Bind keyboard events
         movement.init();
