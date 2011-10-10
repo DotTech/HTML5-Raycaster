@@ -31,7 +31,7 @@ var raycaster = function()
         screenHeight: 320,  // Height of the viewport
         angleBetweenRays: parseFloat(66 / 640), // Angle between casted rays
         movementStep: 10,   // How much the player moves each step
-        turningStep: 5,     // How fast the player turns
+        turningStep: 1,     // How fast the player turns
         distanceToViewport: 0,
         texturesFiles: [
             "img/bluestone.png",
@@ -194,13 +194,21 @@ var raycaster = function()
         
         // Define walls in the world, make sure they are connected and there are no holes left in it
         walls: [
-            new classes.vector(128, 300, 640, 128),
-            new classes.vector(640, 128, 1100, 168),
-            new classes.vector(1100, 168, 1800, 900),
+            new classes.vector(138, 300, 640, 28),
+            new classes.vector(137, 299, 641, 127),
+            new classes.vector(136, 298, 642, 126),
+            
+            new classes.vector(640, 128, 1100, 468),
+            new classes.vector(639, 127, 1101, 467),
+            
+            new classes.vector(1100, 468, 1800, 900),
             new classes.vector(1800, 900, 1860, 1700),
             new classes.vector(1860, 1700, 1500, 1900),
             new classes.vector(1500, 1900, 300, 1800),
-            new classes.vector(300, 1800, 128, 300),
+            
+            new classes.vector(300, 1800, 138, 300),
+            new classes.vector(299, 1801, 137, 299),
+            
             new classes.vector(1100, 468, 1600, 1300),
             new classes.vector(1600, 1300, 1440, 1300),
             new classes.vector(1440, 1300, 700, 700),
@@ -250,7 +258,7 @@ var raycaster = function()
                 }
             }
             
-            // Load the walls into a grid array that we use to speed up the raycasting
+            // Load the walls into a grid array that we use for initial raycasting
             for (var i in objects.walls) {
                 var wall = objects.walls[i],
                     os = wall.y2 - wall.y1,
@@ -264,7 +272,7 @@ var raycaster = function()
                         var ix = parseInt(x / constants.wallSize),
                             iy = parseInt(y / constants.wallSize);
                             
-                        objects.wallsGrid[iy][ix][objects.wallsGrid[iy][ix].length] = new classes.point(x, parseInt(y));;
+                        objects.wallsGrid[iy][ix][objects.wallsGrid[iy][ix].length] = new classes.point(x, parseInt(y));
                         y += deltaY;
                     }
                 }
@@ -273,7 +281,7 @@ var raycaster = function()
                         var ix = parseInt(x / constants.wallSize),
                             iy = parseInt(y / constants.wallSize);
                             
-                        objects.wallsGrid[iy][ix][objects.wallsGrid[iy][ix].length] = new classes.point(x, parseInt(y));;
+                        objects.wallsGrid[iy][ix][objects.wallsGrid[iy][ix].length] = new classes.point(x, parseInt(y));
                         y -= deltaY;
                     }
                 }
@@ -452,11 +460,31 @@ var raycaster = function()
             // Once we found a wall on the grid, we cast deeper into the grid (pixel-by-pixel) until we hit a vector wall intersection
             var findVectorWall = function(angle, wallOnGrid)
             {
+                console.log("angle" + angle.getValue());
+                
                 var angleTan = Math.tan(angle.toRadians()),
-                    deltaX = 0.5 / angleTan,
-                    deltaY = 0.5 * angleTan,
+                    deltaX = 1 / angleTan,
+                    deltaY = 1 * angleTan,
                     wall = new classes.wall(),
                     found = false;
+                
+                // Determine starting point for pixel-perfect raycast
+                var startX = objects.player.x + Math.floor(Math.cos(angle.toRadians()) * wallOnGrid.distance),
+                    startY = objects.player.y - Math.floor(Math.sin(angle.toRadians()) * wallOnGrid.distance);
+                
+                // Fix for 0/90/180/270 degrees
+                if (!angle.facingEast() && !angle.facingWest()) {
+                    deltaX = 0;
+                    deltaY = angle.facingSouth() ? 1 : -1;
+                    startX = objects.player.x;
+                    startY = objects.player.y + (angle.facingSouth() ? wallOnGrid.distance : -wallOnGrid.distance);
+                }
+                else if (!angle.facingNorth() && !angle.facingSouth()) {
+                    deltaX = facingEast() ? 1 : -1;
+                    deltaY = 0;
+                    startX = objects.player.x + (angle.facingEast() ? wallOnGrid.distance : -wallOnGrid.distance);
+                    startY = objects.player.y;
+                }
                 
                 if (angle.facingSouth()) {
                     deltaX = -deltaX;
@@ -466,50 +494,63 @@ var raycaster = function()
                     deltaY = -deltaY;
                 }
                 
-                // Determine starting point for pixel-perfect raycast
-                var startX = objects.player.x + Math.floor(Math.cos(angle.toRadians()) * wallOnGrid.distance),
-                    startY = objects.player.y - Math.floor(Math.sin(angle.toRadians()) * wallOnGrid.distance);
+                //console.log("deltaX: " + deltaX + " deltaY: " + deltaY);
                 
-                //drawing.circle(10 + startX / parseFloat(constants.wallSize / constants.mapBlockSize),
-                //               10 + startY / parseFloat(constants.wallSize / constants.mapBlockSize), 3, "rgb(255,0,0)");
-                
+
                 wall.y = startY;
                 wall.x = startX;
                 
                 while (wall == null || !found) {
+                
+                    //if (!facingNorth() &
                     wall.x += deltaX;
-                    wall.y += deltaY;
+                    wall.y += angle.facingNorth() ? -1 : 1; //deltaY;
+                    
+                    //console.log("deltaX: " + deltaX + " deltaY: -1");
+                    
                     var gridindex = coordsToMap(parseInt(wall.x), parseInt(wall.y));
                     
                     if (gridindex.y >= 0 && gridindex.y < objects.wallsGrid.length && gridindex.x >= 0 && gridindex.x < objects.wallsGrid[0].length) {
                         
+                        //console.log("x: " + parseInt(wall.x) + " y: " + parseInt(wall.y) + " gridx: " + gridindex.x + " gridy: " + gridindex.y);
+                        
                         for (var i in objects.wallsGrid[gridindex.y][gridindex.x]) {
                             var points = objects.wallsGrid[gridindex.y][gridindex.x][i];
                             
-                            if ((parseInt(wall.x) == points.x && parseInt(wall.y) == points.y) 
-                                || (parseInt(wall.x - 1) == points.x && parseInt(wall.y) == points.y)
-                                || (parseInt(wall.x - 1) == points.x && parseInt(wall.y - 1) == points.y)
-                                || (parseInt(wall.x - 1) == points.x && parseInt(wall.y + 1) == points.y)                                
-                                || (parseInt(wall.x + 1) == points.x && parseInt(wall.y + 1) == points.y)
-                                || (parseInt(wall.x + 1) == points.x && parseInt(wall.y) == points.y)
-                                || (parseInt(wall.x + 1) == points.x && parseInt(wall.y - 1) == points.y)) {
+                            if ((parseInt(wall.x) == points.x && parseInt(wall.y) == points.y)) {
                                 found = true;
                                 
-                                wall.distance = Math.abs(Math.abs(objects.player.x - wall.x) / Math.cos(angle.toRadians()));
+                                //console.log("FOUND! x:" + wall.x + " y:" + wall.y + " point.x: " + points.x + " point.y: " + points.y);
+                                
+                                if (deltaX == 0) {
+                                    wall.distance = parseInt(Math.abs(objects.player.y - wall.y));
+                                }
+                                else if (deltaY == 0) {
+                                    wall.distance = parseInt(Math.abs(objects.player.x - wall.x));
+                                }
+                                else {
+                                    wall.distance = parseInt(Math.abs(Math.abs(objects.player.x - wall.x) / Math.cos(angle.toRadians())));
+                                }
+                                
                                 wall.textureId = 1;
                                 wall.textureX = 0;
                                 wall.intersectsWithX = false;
                                 
+                                //drawing.circle(10+ wall.x / parseFloat(constants.wallSize / constants.mapBlockSize), 10+ wall.y / parseFloat(constants.wallSize / constants.mapBlockSize), 5, drawing.colorRgb(255, 0, 0));
+                                
                                 return wall;
-                                console.log("FOOOOOOOOOUUUUUUUUUUUUUUND!");
                             }
                         }
                     }
                     else {
-                    //if (wall.x < 10 || wall.y < 10)
                         found = true;
+                        //console.log("ABORT! x: " + parseInt(wall.x) + " y: " + parseInt(wall.y) + " gridx: " + gridindex.x + " gridy: " + gridindex.y);
                     }
                 }
+                
+                //var shrinkFactor = parseFloat(constants.wallSize / constants.mapBlockSize);
+                //drawing.line(10 + startX / shrinkFactor, 10 + startY / shrinkFactor,  
+                //             10 + wall.x / shrinkFactor, 10 + wall.y / shrinkFactor, drawing.colorRgb(200, 200, 0));
                 
                 return wallOnGrid;
             };
@@ -574,7 +615,7 @@ var raycaster = function()
                 rayStep = 10;
             
             // Visualize the raycasting on the map
-            for (var i = 0; i < constants.screenWidth; i += rayStep) 
+            for (var i = 0; i < 1; /*constants.screenWidth;*/ i += rayStep) 
             {
                 var wallOnGrid = raycasting.findWallOnGrid(angle),
                     wall = raycasting.findVectorWall(angle, wallOnGrid),
@@ -583,6 +624,10 @@ var raycaster = function()
                 
                 drawing.line(playerX, playerY, 
                              playerX + deltaX, playerY - deltaY, drawing.colorRgb(200, 200, 0));
+                
+                //drawing.circle(mapOffsetY + wallOnGrid.x / shrinkFactor, mapOffsetY + wallOnGrid.y / shrinkFactor, 5, drawing.colorRgb(255, 0, 0));
+                //drawing.circle(mapOffsetY + wall.x / shrinkFactor, mapOffsetY + wall.y / shrinkFactor, 5, drawing.colorRgb(255, 0, 0));
+                
                 
                 angle.turn(-constants.angleBetweenRays * rayStep);
             }
@@ -685,8 +730,8 @@ var raycaster = function()
         var update = function()
         {
             if (objects.redrawScreen) {
-                //drawWorld();
-                drawMiniMap();
+                drawWorld();
+                //drawMiniMap();
                 objects.redrawScreen = false;
             }
         }
@@ -833,7 +878,8 @@ var raycaster = function()
     };
     
     return {
-        init: init
+        init: init,
+        objects: objects
     };
 }();
 
