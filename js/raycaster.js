@@ -322,14 +322,17 @@ var raycaster = function()
             // Formula found here: http://paulbourke.net/geometry/lineline2d/
             var getIntersection = function(line, angle) 
             {
+                // Ray line
                 var px1 = objects.player.x,
                     py1 = objects.player.y,
                     px2 = objects.player.x + Math.cos(angle.toRadians()),
                     py2 = objects.player.y - Math.sin(angle.toRadians());
                 
+                // Some number we need to solve our equation
                 var f1 = ((line.x2 - line.x1) * (py1 - line.y1) - (line.y2 - line.y1) * (px1 - line.x1)) /
                          ((line.y2 - line.y1) * (px2 - px1) - (line.x2 - line.x1) * (py2 - py1));
                 
+                // Calculate intersection point
                 var i = new classes.intersection();
                     i.x = px1 + f1 * (px2 - px1),
                     i.y = py1 + f1 * (py2 - py1);
@@ -340,7 +343,7 @@ var raycaster = function()
                     ? i.x <= line.x1 && i.x >= line.x2
                     : i.x >= line.x1 && i.x <= line.x2;
                 
-                // The formula will also return the intersection if it's behind the player
+                // The formula will also return the intersections that are behind the player
                 // Only return it if it's located in the correct quadrant
                 if (!correctQuadrant(i, angle) || !hit) {
                     return false;
@@ -357,30 +360,34 @@ var raycaster = function()
                     i.distance = Math.abs(deltaY / Math.sin(angle.toRadians()));
                 }
                 
-                // Determine which scanline of the texture to draw for this intersection
-                var totalLength = Math.sqrt(Math.abs(line.x1 - line.x2) * 2 + (Math.abs(line.y1 - line.y2) * 2)),
-                    lengthToIntersection = Math.abs(line.x1 - i.x) * 2 + (Math.abs(line.y1 - i.y) * 2) / 2;
-                
-                i.textureIndex = 1;
-                i.textureX = parseInt(lengthToIntersection % constants.wallSize);
-                
                 return i;
             };
             
-            // Find the wall that closest to the player
+            // Find the wall that is closest to the player
             var findWall = function(angle)
             {
-                var intersection = false;
+                var intersection = false,
+                    index = 0;
                 
-                for (var j = 0; j < objects.walls.length; j++) {
+                for (var i = 0; i < objects.walls.length; i++) {
                     // Find intersection point on current wall
-                    var c = getIntersection(objects.walls[j], angle);
+                    var c = getIntersection(objects.walls[i], angle);
                     
                     // If wall distance is less than previously found walls, use it
                     if (!intersection || c.distance < intersection.distance) {
                         intersection = c;
+                        index = i;
                     }
                 }
+                
+                // Texture mapping
+                // Determine which scanline of the texture to draw for this intersection
+                var wallLine = objects.walls[index];
+                    totalLength = Math.sqrt(Math.abs(wallLine.x1 - wallLine.x2) * 2 + (Math.abs(wallLine.y1 - wallLine.y2) * 2)),
+                    lengthToIntersection = Math.abs(wallLine.x1 - intersection.x) * 2 + (Math.abs(wallLine.y1 - intersection.y) * 2) / 2;
+                
+                intersection.textureIndex = 1;
+                intersection.textureX = parseInt(lengthToIntersection % constants.wallSize);
                 
                 return intersection;
             }
@@ -624,8 +631,8 @@ var raycaster = function()
                 }
             };
             
-            window.addEventListener('keydown', keyDownHandler, false);
-            window.addEventListener('keyup', keyUpHandler, false);
+            window.addEventListener("keydown", keyDownHandler, false);
+            window.addEventListener("keyup", keyUpHandler, false);
             
             // Bind key icons for mobile support
             var keys = document.getElementsByClassName("keys");
@@ -633,14 +640,17 @@ var raycaster = function()
             for (var i = 0, n = keys.length; i < n; ++i) {
                 var key = keys[i];
                 var keyCode = parseInt(key.getAttribute("data-code"), 0);
-                key.addEventListener('mouseenter', function() {
-                    keyDownHandler({ keyCode: keyCode });
-                    return false;
-                }, false);
-                key.addEventListener('mouseleave', function() {
-                    keyUpHandler({ keyCode: keyCode });
-                    return false;
-                }, false);
+                
+                (function(k, kc) {
+                    k.addEventListener("mouseover", function() {
+                        keyDownHandler({ keyCode: kc });
+                        return false;
+                    }, false);
+                    k.addEventListener("mouseout", function() {
+                        keyUpHandler({ keyCode: kc });
+                        return false;
+                    }, false);
+                }(key, keyCode));
             }
             
             // Redraw when settings change
