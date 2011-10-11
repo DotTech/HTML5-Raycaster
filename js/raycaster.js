@@ -2,7 +2,7 @@
     HTML5 Raycaster Demo
     
     Author:     Ruud van Falier (ruud@dottech.nl)
-    Version:    0.5
+    Version:    0.5.1
     Released:   11 october 2011
     
     Demo:       http://www.dottech.nl/raycaster/
@@ -15,16 +15,17 @@
     Feel free to use it for whatever you need it for.
     
     Changelog:
-    (v0.2) Initial release.
-           Uses "wolfenstein" technique to render the world.
-           Has a grid-bases level and supports only orthogonal walls.
-    (v0.3) Redraw only when player has moved or settings have changed.
-           Removed jQuery dependency (thanks to James Abley, https://github.com/jabley)
-    (v0.4) Added quality setting which makes raycasting use lesser rays.
-           Attempted to implement non-orthogonal walls, but it was a failed attempt
-    (v0.5) Raycasting engine is rewritten and now supports non-orthogonal walls.
-           Strafing implemented.
-           Quality settings removed because it needs fixing.
+    (0.2)   Initial release.
+            Uses "wolfenstein" technique to render the world.
+            Has a grid-bases level and supports only orthogonal walls.
+    (0.3)   Redraw only when player has moved or settings have changed.
+            Removed jQuery dependency (thanks to James Abley, https://github.com/jabley)
+    (0.4)   Added quality setting which makes raycasting use lesser rays.
+            Attempted to implement non-orthogonal walls, but it was a failed attempt
+    (0.5)   Raycasting engine is rewritten and now supports non-orthogonal walls.
+            Strafing implemented.
+            Quality settings removed because it needs fixing.
+    (0.5.1) Added FPS counter
     
     Planned features:
     - Floor mapping
@@ -55,7 +56,9 @@ var raycaster = function()
             "img/purplestone.png",
             "img/redbrick.png",
             "img/wood.png",
-        ]
+        ],
+        fpsFont: "bold 12px arial",
+        glIntervalTimeout: 10
     };
     
     // Define classes / structures
@@ -286,6 +289,8 @@ var raycaster = function()
     // Contains all functions related to rendering
     var rendering = function()
     {
+        var lastFpsUpdate = new Date().getTime();
+        
         /****************** / Namespaces / ******************/
         // Basic drawing functions
         var drawing = 
@@ -343,6 +348,14 @@ var raycaster = function()
             lineSquare: function(x, y, x2, y2, color)
             {
                 drawing.square(x, y, x2, y2 - y, color);
+            },
+            
+            text: function(text, x, y, color, font)
+            {
+                objects.context.fillStyle = color;
+                objects.context.font = font;
+                objects.context.textBaseline = "top";
+                objects.context.fillText(text, x, y);
             }
         };
         
@@ -571,7 +584,20 @@ var raycaster = function()
                 // Move on to next scanline
                 angle.turn(-constants.angleBetweenRays * scanlineWidth);
             }
+            
+            drawFPS();
         };
+        
+        // Draw the FPS counter
+        var drawFPS = function()
+        {
+            var elapsed = new Date().getTime() - lastFpsUpdate,
+                fps = Math.round(1000 / elapsed);
+            
+            drawing.text(fps + " fps", 590, 10, drawing.colorRgb(255, 255, 255), constants.fpsFont);
+            
+            lastFpsUpdate = new Date().getTime();
+        }
         
         /****************** / Public methods / ******************/
         // Tell renderer that a redraw is required
@@ -778,7 +804,7 @@ var raycaster = function()
         objects.gameloopInterval = setInterval(function() {
             movement.update();
             rendering.update();
-        }, 50);
+        }, constants.glIntervalTimeout);
     };
     
     return {
