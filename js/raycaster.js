@@ -25,6 +25,7 @@
            Quality settings removed because it needs fixing.
     
     Planned features:
+    - Floor mapping
     - Sectors
     - Variable height walls
     - Sprites    

@@ -22,3 +22,9 @@ Changelog:
 (v0.5) Raycasting engine is rewritten and now supports non-orthogonal walls.
        Strafing implemented.
        Quality settings removed because it needs fixing.
+
+Planned features:
+- Floor mapping
+- Sectors
+- Variable height walls
+- Sprites    
