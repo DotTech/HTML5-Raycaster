@@ -2,7 +2,7 @@
     HTML5 Raycaster Demo
     
     Author:     Ruud van Falier (ruud@dottech.nl)
-    Version:    0.5.1
+    Version:    0.5.2
     Released:   11 october 2011
     
     Demo:       http://www.dottech.nl/raycaster/
@@ -204,8 +204,8 @@ var raycaster = function()
             renderLighting: function() {
                 return document.getElementById("chkLighting").checked;
             },
-            renderFloor: function() {
-                return document.getElementById("chkFloor").checked;
+            renderMiniMap: function() {
+                return document.getElementById("chkMiniMap").checked;
             },
             renderSky: function() {
                 return document.getElementById("chkSky").checked;
@@ -483,44 +483,46 @@ var raycaster = function()
         // Draw the mini map
         var drawMiniMap = function() 
         {
-            // Map is smaller than world, determine shrink factor
-            var shrinkFactor = 10,
-                mapOffsetX = 0,
-                mapOffsetY = 0,
-                odd = false;
-            
-            // Draw white background
-            drawing.square(mapOffsetX, mapOffsetY, 
-                           80, 80,
-                           drawing.colorRgb(255, 255, 255));
-            
-            // Draw the walls
-            for (var i in objects.walls) {
-                var wall = objects.walls[i];
-                drawing.line(mapOffsetX + wall.x1 / shrinkFactor, mapOffsetY + wall.y1 / shrinkFactor, 
-                             mapOffsetX + wall.x2 / shrinkFactor, mapOffsetY + wall.y2 / shrinkFactor, drawing.colorRgb(0, 0, 0));
-            }
-            
-            // Draw player
-            var playerX = Math.floor(objects.player.x / shrinkFactor),
-                playerY = Math.floor(objects.player.y / shrinkFactor);
-             
-            drawing.circle(mapOffsetX + playerX, mapOffsetY + playerY, 3, drawing.colorRgb(255, 0, 0));
-            
-            // Visualize the raycasting on the map
-            var angle = new classes.angle(objects.player.angle.getValue() + constants.fieldOfView / 2),
-                rayStep = 10;
-            
-            for (var i = 0; i < constants.screenWidth; i += rayStep) 
-            {
-                var intersection = raycasting.findWall(angle),
-                    deltaX = Math.floor(Math.cos(angle.toRadians()) * (Math.abs(intersection.distance) / shrinkFactor)),
-                    deltaY = Math.floor(Math.sin(angle.toRadians()) * (Math.abs(intersection.distance) / shrinkFactor));
+            if (objects.settings.renderMiniMap()) {
+                // Map is smaller than world, determine shrink factor
+                var shrinkFactor = 10,
+                    mapOffsetX = 0,
+                    mapOffsetY = 0,
+                    odd = false;
                 
-                drawing.line(mapOffsetX + playerX, mapOffsetY + playerY, 
-                             playerX + deltaX, playerY - deltaY, drawing.colorRgb(200, 200, 0));
+                // Draw white background
+                drawing.square(mapOffsetX, mapOffsetY, 
+                               80, 80,
+                               drawing.colorRgb(255, 255, 255));
                 
-                angle.turn(-constants.angleBetweenRays * rayStep);
+                // Draw the walls
+                for (var i in objects.walls) {
+                    var wall = objects.walls[i];
+                    drawing.line(mapOffsetX + wall.x1 / shrinkFactor, mapOffsetY + wall.y1 / shrinkFactor, 
+                                 mapOffsetX + wall.x2 / shrinkFactor, mapOffsetY + wall.y2 / shrinkFactor, drawing.colorRgb(0, 0, 0));
+                }
+                
+                // Draw player
+                var playerX = Math.floor(objects.player.x / shrinkFactor),
+                    playerY = Math.floor(objects.player.y / shrinkFactor);
+                 
+                drawing.circle(mapOffsetX + playerX, mapOffsetY + playerY, 3, drawing.colorRgb(255, 0, 0));
+                
+                // Visualize the raycasting on the map
+                var angle = new classes.angle(objects.player.angle.getValue() + constants.fieldOfView / 2),
+                    rayStep = 10;
+                
+                for (var i = 0; i < constants.screenWidth; i += rayStep) 
+                {
+                    var intersection = raycasting.findWall(angle),
+                        deltaX = Math.floor(Math.cos(angle.toRadians()) * (Math.abs(intersection.distance) / shrinkFactor)),
+                        deltaY = Math.floor(Math.sin(angle.toRadians()) * (Math.abs(intersection.distance) / shrinkFactor));
+                    
+                    drawing.line(mapOffsetX + playerX, mapOffsetY + playerY, 
+                                 playerX + deltaX, playerY - deltaY, drawing.colorRgb(200, 200, 0));
+                    
+                    angle.turn(-constants.angleBetweenRays * rayStep);
+                }
             }
         };
         
@@ -636,23 +638,6 @@ var raycaster = function()
                             var opacity = parseFloat(1 - 1 / colorDivider);
                             
                             drawing.lineSquare(i, scanlineStartY, scanlineWidth, scanlineEndY, drawing.colorRgba(0, 0, 0, opacity))
-                        }
-                    }
-                    
-                    // Floor casting
-                    // Formula from: http://lodev.org/cgtutor/raycasting2.html
-                    if (objects.settings.renderFloor()) {
-                        for (var y = scanlineEndY; y < constants.screenHeight; y++) {
-                            var curdist = constants.screenHeight / (2 * y - constants.screenHeight),
-                                weight = curdist / intersection.distance,
-                                floorX = weight * intersection.x + (1 - weight) * objects.player.x,
-                                floorY = weight * intersection.y + (1 - weight) * objects.player.y,
-                                textureX = parseInt(floorX * 64) % 64,
-                                textureY = parseInt(floorY * 64) % 64;
-                            
-                            objects.context.drawImage(objects.textures[3], 
-                                                      textureX, textureY, scanlineWidth, 1,
-                                                      i, y, scanlineWidth, 1);
                         }
                     }
                 }
@@ -851,7 +836,7 @@ var raycaster = function()
             // Redraw when settings change
             document.getElementById("chkTextures").addEventListener('change', rendering.redraw);
             document.getElementById("chkLighting").addEventListener('change', rendering.redraw);
-            document.getElementById("chkFloor").addEventListener('change', rendering.redraw);
+            document.getElementById("chkMiniMap").addEventListener('change', rendering.redraw);
             document.getElementById("chkSky").addEventListener('change', rendering.redraw);
         };
         

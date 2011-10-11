@@ -1,7 +1,7 @@
 HTML5 Raycaster Demo
 
 Author:     Ruud van Falier (ruud@dottech.nl)
-Version:    0.5.1
+Version:    0.5.2
 Released:   11 october 2011
 
 Demo:       http://www.dottech.nl/raycaster/
@@ -25,9 +25,11 @@ Changelog:
         Strafing implemented.
         Quality settings removed because it needs fixing.
 (0.5.1) Added FPS counter
-
+(0.5.2) Experimented with floor casting, but it costs too much performance (ended up with 2 fps)
+        For that reason a gradient is used as floor.
+        Added sky background
+        
 Planned features:
-- Floor mapping
 - Sectors
 - Variable height walls
 - Sprites    
