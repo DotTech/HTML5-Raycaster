@@ -21,7 +21,8 @@
     (v0.4) Added quality setting which makes raycasting use lesser rays.
            Attempted to implement non-orthogonal walls, but it was a failed attempt
     (v0.5) Raycasting engine is rewritten and now supports non-orthogonal walls.
-           Strafing implemented
+           Strafing implemented.
+           Quality settings removed because it needs fixing.
     
     Planned features:
     - Sectors
@@ -196,11 +197,11 @@ var raycaster = function()
             },
             /*renderShadow: function() {
                 return document.getElementById("chkShadow").checked;
-            },*/
+            },
             renderQuality: function() {
                 var e = document.getElementById("ddlQuality");
                 return parseInt(e.options[e.selectedIndex].value);
-            }
+            }*/
         },
         
         // Define walls in the world, make sure they are connected and there are no holes left in it
@@ -501,7 +502,7 @@ var raycaster = function()
             var angle = new classes.angle(objects.player.angle.getValue() + constants.fieldOfView / 2);
             
             // Scanline width of 1px gives the best quality, but costs most performance
-            var scanlineWidth = objects.settings.renderQuality();
+            var scanlineWidth = 1; //objects.settings.renderQuality();
             
             // Draw the world as vertical scanlines
             for (var i = 0; i < constants.screenWidth; i += scanlineWidth) 
@@ -735,8 +736,6 @@ var raycaster = function()
             // Redraw when settings change
             document.getElementById("chkTextures").addEventListener('change', rendering.redraw);
             document.getElementById("chkLighting").addEventListener('change', rendering.redraw);
-            //document.getElementById("chkShadow").addEventListener('change', rendering.redraw);
-            document.getElementById("ddlQuality").addEventListener('change', rendering.redraw);
         };
         
         return {
