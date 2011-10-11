@@ -26,9 +26,11 @@
             Strafing implemented.
             Quality settings removed because it needs fixing.
     (0.5.1) Added FPS counter
+    (0.5.2) Experimented with floor casting, but it costs too much performance.
+            For that reason a gradient is used as floor.
+            Added sky background
     
     Planned features:
-    - Floor mapping
     - Sectors
     - Variable height walls
     - Sprites    
@@ -57,8 +59,9 @@ var raycaster = function()
             "img/redbrick.png",
             "img/wood.png",
         ],
+        skyImage: "img/sky.jpg",
         fpsFont: "bold 12px arial",
-        glIntervalTimeout: 10
+        glIntervalTimeout: 50
     };
     
     // Define classes / structures
@@ -201,10 +204,13 @@ var raycaster = function()
             renderLighting: function() {
                 return document.getElementById("chkLighting").checked;
             },
-            /*renderShadow: function() {
-                return document.getElementById("chkShadow").checked;
+            renderFloor: function() {
+                return document.getElementById("chkFloor").checked;
             },
-            renderQuality: function() {
+            renderSky: function() {
+                return document.getElementById("chkSky").checked;
+            },
+            /*renderQuality: function() {
                 var e = document.getElementById("ddlQuality");
                 return parseInt(e.options[e.selectedIndex].value);
             }*/
@@ -272,6 +278,8 @@ var raycaster = function()
         // Array with Image objects containing the textures
         textures: null,
         
+        skyImage: new Image(),
+        
         // Loads the texture images in memory
         loadTextures: function() 
         {
@@ -283,6 +291,11 @@ var raycaster = function()
                     rendering.redraw();
                 };
             }
+            
+            objects.skyImage.src = constants.skyImage;
+            objects.skyImage.onload = function() {
+                    rendering.redraw();
+            };
         }
     };
 
@@ -511,6 +524,44 @@ var raycaster = function()
             }
         };
         
+        // Draw sky background
+        var drawSky = function()
+        {
+            var skyX = objects.skyImage.width - parseInt(objects.player.angle.getValue() * (objects.skyImage.width / 360)),
+                skyWidth = constants.screenWidth,
+                leftOverWidth = 0;
+                
+            if (skyX + skyWidth > objects.skyImage.width) {
+                leftOverWidth = skyX + skyWidth - objects.skyImage.width;
+                skyWidth -= leftOverWidth;
+            }
+            
+            objects.context.drawImage(objects.skyImage,
+                                      skyX, 0, skyWidth, constants.screenHeight / 2,
+                                      0, 0, skyWidth, constants.screenHeight / 2);
+
+            if (leftOverWidth > 0) {
+                objects.context.drawImage(objects.skyImage,
+                                          0, 0, leftOverWidth, constants.screenHeight / 2,
+                                          skyWidth, 0, leftOverWidth, constants.screenHeight / 2);
+            }
+        }
+        
+        // Floor casting is too slow at this point
+        // For that reason we use a gradient for the floor
+        var drawFloor = function()
+        {
+            var gradient = objects.context.createLinearGradient(0, constants.screenHeight / 2, 0, constants.screenHeight);
+            
+            gradient.addColorStop(0, drawing.colorRgb(20, 20, 20));
+            gradient.addColorStop(0.25, drawing.colorRgb(40, 40, 40));
+            gradient.addColorStop(0.6, drawing.colorRgb(100, 100, 100));
+            gradient.addColorStop(1, drawing.colorRgb(130, 130, 130));
+            
+            objects.context.fillStyle = gradient;
+            objects.context.fillRect(0, constants.screenHeight / 2, constants.screenWidth, constants.screenHeight / 2);
+        }
+        
         // Draw 3D representation of the world
         var drawWorld = function()
         {
@@ -519,6 +570,14 @@ var raycaster = function()
             // Draw solid floor and ceiling
             drawing.square(0, 0, constants.screenWidth, constants.screenHeight / 2, drawing.colorRgb(60, 60, 60));
             drawing.square(0, constants.screenHeight / 2, constants.screenWidth, constants.screenHeight / 2, drawing.colorRgb(120, 120, 120));
+
+            // Draw sky background image
+            if (objects.settings.renderSky()) {
+                drawSky();
+            }
+            
+            // Draw floor gradient
+            drawFloor();
             
             var angle = new classes.angle(objects.player.angle.getValue() + constants.fieldOfView / 2);
             
@@ -579,13 +638,28 @@ var raycaster = function()
                             drawing.lineSquare(i, scanlineStartY, scanlineWidth, scanlineEndY, drawing.colorRgba(0, 0, 0, opacity))
                         }
                     }
+                    
+                    // Floor casting
+                    // Formula from: http://lodev.org/cgtutor/raycasting2.html
+                    if (objects.settings.renderFloor()) {
+                        for (var y = scanlineEndY; y < constants.screenHeight; y++) {
+                            var curdist = constants.screenHeight / (2 * y - constants.screenHeight),
+                                weight = curdist / intersection.distance,
+                                floorX = weight * intersection.x + (1 - weight) * objects.player.x,
+                                floorY = weight * intersection.y + (1 - weight) * objects.player.y,
+                                textureX = parseInt(floorX * 64) % 64,
+                                textureY = parseInt(floorY * 64) % 64;
+                            
+                            objects.context.drawImage(objects.textures[3], 
+                                                      textureX, textureY, scanlineWidth, 1,
+                                                      i, y, scanlineWidth, 1);
+                        }
+                    }
                 }
                 
                 // Move on to next scanline
                 angle.turn(-constants.angleBetweenRays * scanlineWidth);
             }
-            
-            drawFPS();
         };
         
         // Draw the FPS counter
@@ -595,7 +669,6 @@ var raycaster = function()
                 fps = Math.round(1000 / elapsed);
             
             drawing.text(fps + " fps", 590, 10, drawing.colorRgb(255, 255, 255), constants.fpsFont);
-            
             lastFpsUpdate = new Date().getTime();
         }
         
@@ -612,6 +685,7 @@ var raycaster = function()
             if (objects.redrawScreen) {
                 drawWorld();
                 drawMiniMap();
+                drawFPS();
                 objects.redrawScreen = false;
             }
         }
@@ -777,6 +851,8 @@ var raycaster = function()
             // Redraw when settings change
             document.getElementById("chkTextures").addEventListener('change', rendering.redraw);
             document.getElementById("chkLighting").addEventListener('change', rendering.redraw);
+            document.getElementById("chkFloor").addEventListener('change', rendering.redraw);
+            document.getElementById("chkSky").addEventListener('change', rendering.redraw);
         };
         
         return {

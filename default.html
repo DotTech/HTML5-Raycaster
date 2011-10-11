@@ -34,8 +34,11 @@
             <input type="checkbox" id="chkLighting" value="true" checked="checked" />
             <label for="chkLighting">lighting</label>
             
-            <!--input type="checkbox" id="chkShadow" value="true" checked="checked" />
-            <label for="chkShadow">shadow</label-->
+            <input type="checkbox" id="chkFloor" value="true" disabled="disabled" />
+            <label for="chkFloor">floor</label>
+            
+            <input type="checkbox" id="chkSky" value="true" checked="checked" />
+            <label for="chkSky">sky</label>
             
             <!--label for="ddlQuality">Quality</label>
             <select id="ddlQuality">
@@ -61,5 +64,17 @@
         
     </div>
 
+    <script type="text/javascript">
+        var _gaq = _gaq || [];
+        _gaq.push(['_setAccount', 'UA-4807753-7']);
+        _gaq.push(['_trackPageview']);
+
+        (function() {
+            var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+            ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+            var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+        })();
+    </script>
+    
 </body>
 </html>
