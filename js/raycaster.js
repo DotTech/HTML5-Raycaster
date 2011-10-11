@@ -3,6 +3,8 @@
     
     Author:     Ruud van Falier (ruud@dottech.nl)
     Version:    0.5
+    Released:   11 october 2011
+    
     Demo:       http://www.dottech.nl/raycaster/
     Git:        https://github.com/Stribe/HTML5-Raycaster
     
