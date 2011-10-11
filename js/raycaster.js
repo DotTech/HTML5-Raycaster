@@ -25,13 +25,13 @@ var raycaster = function()
     // Game constants
     var constants =
     {
-        wallSize: 64,
+        defaultWallHeight: 64,
         fieldOfView: 66,    // Field of view of the player (in degrees)
         screenWidth: 640,   // Width of the viewport
         screenHeight: 320,  // Height of the viewport
         angleBetweenRays: parseFloat(66 / 640), // Angle between casted rays
-        movementStep: 10,   // How much the player moves each step
-        turningStep: 5,     // How fast the player turns
+        movementStep: 9,    // How much the player moves each step
+        turningStep: 3,     // How fast the player turns
         distanceToViewport: 0,
         texturesFiles: [
             "img/bluestone.png",
@@ -64,6 +64,17 @@ var raycaster = function()
                 y1: y1,
                 x2: x2,
                 y2: y2
+            };
+        },
+        
+        wall: function(x1, y1, x2, y2, textureId)
+        {
+            return {
+                x1: x1,
+                y1: y1,
+                x2: x2,
+                y2: y2,
+                textureId: textureId
             };
         },
         
@@ -154,9 +165,9 @@ var raycaster = function()
         // Defines player values
         player: 
         {
-            x: 100,
+            x: 200,
             y: 350,
-            angle: new classes.angle(60)
+            angle: new classes.angle(180)
         },
         
         centerOfScreen: 
@@ -174,9 +185,9 @@ var raycaster = function()
             renderLighting: function() {
                 return document.getElementById("chkLighting").checked;
             },
-            renderShadow: function() {
+            /*renderShadow: function() {
                 return document.getElementById("chkShadow").checked;
-            },
+            },*/
             renderQuality: function() {
                 var e = document.getElementById("ddlQuality");
                 return parseInt(e.options[e.selectedIndex].value);
@@ -185,21 +196,14 @@ var raycaster = function()
         
         // Define walls in the world, make sure they are connected and there are no holes left in it
         walls: [
-            new classes.vector(10, 10, 990, 20),
-            new classes.vector(990, 20, 980, 990),
-            new classes.vector(980, 990, 20, 980),
-            new classes.vector(20, 980, 10, 10),
-            new classes.vector(10, 350, 150, 10),
-            new classes.vector(150, 400, 400, 200),
-            new classes.vector(150, 10, 600, 10),
-            new classes.vector(400, 200, 440, 400),
-            new classes.vector(600, 10, 800, 400),
-            
-            new classes.vector(700, 700, 730, 701),
-            new classes.vector(730, 701, 760, 730),
-            new classes.vector(760, 730, 761, 760),
-            new classes.vector(761, 760, 730, 790),
-            new classes.vector(730, 790, 700, 791),
+            new classes.wall(100, 10, 900, 10, 1),
+            new classes.wall(10, 100, 10, 900, 1),
+            new classes.wall(10, 100, 100, 10, 1),
+            new classes.wall(990, 100, 990, 900, 1),
+            new classes.wall(900, 10, 990, 100, 1),
+            new classes.wall(100, 990, 900, 990, 1),
+            new classes.wall(990, 900, 900, 990, 1),
+            new classes.wall(10, 900, 100, 990, 1),
         ],
         
         // Definition of keyboard buttons
@@ -303,18 +307,15 @@ var raycaster = function()
             var correctQuadrant = function(intersection, angle)
             {
                 var deltaX = objects.player.x - intersection.x,
-                    deltaY = objects.player.y - intersection.y;
+                    deltaY = objects.player.y - intersection.y,
+                    quadrant = 0;
                 
-                if (deltaX > 0) {
-                    return (deltaY > 0)
-                        ? angle.getQuadrant() == 2
-                        : angle.getQuadrant() == 3;
-                }
-                else {
-                    return (deltaY > 0) 
-                        ? angle.getQuadrant() == 1
-                        : angle.getQuadrant() == 4;
-                }
+                if (deltaX <= 0 && deltaY >= 0) quadrant = 1;
+                if (deltaX > 0 && deltaY > 0) quadrant = 2;
+                if (deltaX > 0 && deltaY <= 0) quadrant = 3;
+                if (deltaX <= 0 && deltaY < 0) quadrant = 4;
+                
+                return quadrant == angle.getQuadrant();
             }
             
             /****************** / Public methods / ******************/
@@ -332,16 +333,24 @@ var raycaster = function()
                 var f1 = ((line.x2 - line.x1) * (py1 - line.y1) - (line.y2 - line.y1) * (px1 - line.x1)) /
                          ((line.y2 - line.y1) * (px2 - px1) - (line.x2 - line.x1) * (py2 - py1));
                 
-                // Calculate intersection point
+                // Calculate where the ray intersects with the line
                 var i = new classes.intersection();
                     i.x = px1 + f1 * (px2 - px1),
-                    i.y = py1 + f1 * (py2 - py1);
+                    i.y = py1 + f1 * (py2 - py1),
+                    roundX = Math.round(i.x),
+                    roundY = Math.round(i.y);
                 
                 // Check if intersection is located on the line
+                // Use rounded coordinates here!
                 var hit = true;
-                hit = (line.x1 > line.x2) 
-                    ? i.x <= line.x1 && i.x >= line.x2
-                    : i.x >= line.x1 && i.x <= line.x2;
+                hit = (line.x1 >= line.x2) 
+                    ? roundX <= line.x1 && roundX >= line.x2
+                    : roundX >= line.x1 && roundX <= line.x2;
+                if (hit) {
+                    hit = (line.y1 >= line.y2)
+                        ? roundY <= line.y1 && roundY >= line.y2
+                        : roundY >= line.y1 && roundY <= line.y2;
+                }
                 
                 // The formula will also return the intersections that are behind the player
                 // Only return it if it's located in the correct quadrant
@@ -382,12 +391,11 @@ var raycaster = function()
                 
                 // Texture mapping
                 // Determine which scanline of the texture to draw for this intersection
-                var wallLine = objects.walls[index];
-                    totalLength = Math.sqrt(Math.abs(wallLine.x1 - wallLine.x2) * 2 + (Math.abs(wallLine.y1 - wallLine.y2) * 2)),
-                    lengthToIntersection = Math.abs(wallLine.x1 - intersection.x) * 2 + (Math.abs(wallLine.y1 - intersection.y) * 2) / 2;
+                var wallLine = objects.walls[index],
+                    lengthToIntersection = Math.sqrt(Math.pow(Math.abs(wallLine.x1 - intersection.x), 2) + Math.pow(Math.abs(wallLine.y1 - intersection.y), 2));
                 
                 intersection.textureIndex = 1;
-                intersection.textureX = parseInt(lengthToIntersection % constants.wallSize);
+                intersection.textureX = parseInt(lengthToIntersection % constants.defaultWallHeight);
                 
                 return intersection;
             }
@@ -470,7 +478,7 @@ var raycaster = function()
                     intersection.distance *= Math.cos(distortRemove.toRadians());
 
                     // Use distance to determine the size of the wall slice
-                    var wallHeight = Math.floor(constants.wallSize / intersection.distance * constants.distanceToViewport);
+                    var wallHeight = Math.floor(constants.defaultWallHeight / intersection.distance * constants.distanceToViewport);
                     
                     // If a wall slice is larger than the viewport height, we only need the visible section
                     // skipPixels indicates how many pixels from top and bottom towards the center can be skipped during rendering
@@ -484,32 +492,24 @@ var raycaster = function()
                     
                     if (objects.settings.renderTextures()) {
                         // The visible scale of a wall compared to its original size
-                        var wallsGridcale = wallHeight / constants.wallSize;
+                        var wallsGridcale = wallHeight / constants.defaultWallHeight;
                         
                         var offsetY = (skipPixels > 0) ? skipPixels / wallsGridcale : 0;
-                        if (offsetY >= constants.wallSize / 2) {
-                            offsetY = constants.wallSize / 2 - 1;
+                        if (offsetY >= constants.defaultWallHeight / 2) {
+                            offsetY = constants.defaultWallHeight / 2 - 1;
                         }
                         
                         // Draw the texture
                         objects.context.drawImage(objects.textures[intersection.textureIndex], 
-                                                  intersection.textureX, offsetY, scanlineWidth, constants.wallSize - offsetY * 2,
+                                                  intersection.textureX, offsetY, scanlineWidth, constants.defaultWallHeight - offsetY * 2,
                                                   i, scanlineStartY, scanlineWidth, scanlineEndY - scanlineStartY);
                     }
                     else {
                         // Draw without textures
                         drawing.lineSquare(i, scanlineStartY,  scanlineWidth, scanlineEndY, drawing.colorRgb(128, 0, 0));
                     }
-                    
-                    // Make one side of the wallsGrid darker to create a shadow effect
-                    // This is achieved by drawing a black scanline with 50% opacity
-                    //if (objects.settings.renderShadow()) {
-                    //    if (wall.intersectsWithX) {
-                    //        drawing.lineSquare(i, scanlineStartY, scanlineWidth, scanlineEndY, drawing.colorRgba(0, 0, 0, 0.5))
-                    //    }
-                    //}
-                    
-                    // Make wallsGrid in the distance appear darker
+
+                    // Make walls in the distance appear darker
                     if (objects.settings.renderLighting()) {
                         if (intersection.distance > 100) {
                             var colorDivider = parseFloat(intersection.distance / 200); 
@@ -568,16 +568,14 @@ var raycaster = function()
             step = forward ? constants.movementStep : -constants.movementStep;
             
             var deltaX = Math.cos(objects.player.angle.toRadians()) * step,
-                deltaY = Math.sin(objects.player.angle.toRadians()) * step,
-                newMapX = parseInt((objects.player.x + deltaX) / constants.wallSize),
-                newMapY = parseInt((objects.player.y - deltaY) / constants.wallSize);
+                deltaY = Math.sin(objects.player.angle.toRadians()) * step;
             
             var angle = forward ? objects.player.angle : new classes.angle(objects.player.angle.getValue() + 180),
                 intersection = rendering.raycasting.findWall(angle);
                 
             if (!intersection || intersection.distance > 50) {
-                objects.player.x += deltaX;
-                objects.player.y -= deltaY;
+                objects.player.x = Math.round(objects.player.x + deltaX);
+                objects.player.y = Math.round(objects.player.y - deltaY);
             }
             
             rendering.redraw();
@@ -656,7 +654,7 @@ var raycaster = function()
             // Redraw when settings change
             document.getElementById("chkTextures").addEventListener('change', rendering.redraw);
             document.getElementById("chkLighting").addEventListener('change', rendering.redraw);
-            document.getElementById("chkShadow").addEventListener('change', rendering.redraw);
+            //document.getElementById("chkShadow").addEventListener('change', rendering.redraw);
             document.getElementById("ddlQuality").addEventListener('change', rendering.redraw);
         };
         
