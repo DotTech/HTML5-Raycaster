@@ -1,23 +1,32 @@
 /*
     HTML5 Raycaster Demo
     
-    Just playing around with the canvas.
-    Very basic raycasting engine with texture mapping support.
-    Feel free to use for whatever you need it for.
+    Author:     Ruud van Falier (ruud@dottech.nl)
+    Version:    0.5
+    Demo:       http://www.dottech.nl/raycaster/
+    Git:        https://github.com/Stribe/HTML5-Raycaster
     
-    Version: 0.5
-    Author: Ruud van Falier
+    This is a very basic raycasting engine running on a HTML5 canvas.
+    Currently supports non-orthogonal walls and texture mapping.
+    The old (orthogonal walls) version is available from the v0.3 branch.
+    
+    Feel free to use it for whatever you need it for.
     
     Changelog:
     (v0.2) Initial release.
+           Uses "wolfenstein" technique to render the world.
+           Has a grid-bases level and supports only orthogonal walls.
     (v0.3) Redraw only when player has moved or settings have changed.
-           Removed jQuery dependency (thanks to James Abley (https://github.com/jabley))
+           Removed jQuery dependency (thanks to James Abley, https://github.com/jabley)
     (v0.4) Added quality setting which makes raycasting use lesser rays.
            Attempted to implement non-orthogonal walls, but it was a failed attempt
-    (v0.5) Raycasting engine is rewritten and now supports non-orthogonal walls
+    (v0.5) Raycasting engine is rewritten and now supports non-orthogonal walls.
+           Strafing implemented
     
-    ruud@dottech.nl
-    http://www.dottech.nl
+    Planned features:
+    - Sectors
+    - Variable height walls
+    - Sprites    
 */
 
 var raycaster = function()
@@ -165,9 +174,9 @@ var raycaster = function()
         // Defines player values
         player: 
         {
-            x: 200,
-            y: 350,
-            angle: new classes.angle(180)
+            x: 150,
+            y: 250,
+            angle: new classes.angle(272)
         },
         
         centerOfScreen: 
@@ -196,14 +205,42 @@ var raycaster = function()
         
         // Define walls in the world, make sure they are connected and there are no holes left in it
         walls: [
-            new classes.wall(100, 10, 900, 10, 1),
-            new classes.wall(10, 100, 10, 900, 1),
+            // Walls surrounding the level
+            new classes.wall(100, 10, 700, 10, 1),
+            new classes.wall(10, 100, 10, 700, 1),
             new classes.wall(10, 100, 100, 10, 1),
-            new classes.wall(990, 100, 990, 900, 1),
-            new classes.wall(900, 10, 990, 100, 1),
-            new classes.wall(100, 990, 900, 990, 1),
-            new classes.wall(990, 900, 900, 990, 1),
-            new classes.wall(10, 900, 100, 990, 1),
+            new classes.wall(790, 100, 790, 700, 1),
+            new classes.wall(700, 10, 790, 100, 1),
+            new classes.wall(100, 790, 700, 790, 1),
+            new classes.wall(790, 700, 700, 790, 1),
+            new classes.wall(10, 700, 100, 790, 1),
+            
+            // Colored stones west
+            new classes.wall(100, 420, 200, 700, 2),
+            new classes.wall(100, 420, 120, 400, 2),
+            new classes.wall(120, 400, 160, 400, 2),
+            new classes.wall(160, 400, 180, 420, 2),
+            new classes.wall(180, 420, 200, 460, 2),
+            new classes.wall(200, 460, 400, 640, 2),
+            new classes.wall(400, 640, 420, 680, 2),
+            new classes.wall(420, 680, 420, 700, 2),
+            new classes.wall(420, 700, 390, 730, 2),
+            new classes.wall(390, 730, 200, 700, 2),
+            
+            // Wooden walls in the middle
+            new classes.wall(300, 300, 340, 300, 7),
+            new classes.wall(340, 300, 380, 320, 7),
+            new classes.wall(380, 320, 420, 360, 7),
+            new classes.wall(420, 360, 400, 440, 7),
+            new classes.wall(400, 440, 400, 470, 7),
+            new classes.wall(400, 470, 430, 510, 7),
+            new classes.wall(430, 510, 500, 530, 7),
+            new classes.wall(500, 530, 560, 530, 7),
+            new classes.wall(560, 530, 580, 500, 7),
+            new classes.wall(580, 500, 560, 280, 7),
+            new classes.wall(560, 280, 500, 220, 7),
+            new classes.wall(500, 220, 340, 190, 7),
+            new classes.wall(340, 190, 300, 300, 7),
         ],
         
         // Definition of keyboard buttons
@@ -212,7 +249,8 @@ var raycaster = function()
             arrowUp: new classes.keyButton(38),
             arrowRight: new classes.keyButton(39),
             arrowDown: new classes.keyButton(40),
-            esc: new classes.keyButton(27)
+            esc: new classes.keyButton(27),
+            shift: new classes.keyButton(16)
         },
         
         // Reference to the canvas context
@@ -394,7 +432,7 @@ var raycaster = function()
                 var wallLine = objects.walls[index],
                     lengthToIntersection = Math.sqrt(Math.pow(Math.abs(wallLine.x1 - intersection.x), 2) + Math.pow(Math.abs(wallLine.y1 - intersection.y), 2));
                 
-                intersection.textureIndex = 1;
+                intersection.textureIndex = objects.walls[index].textureId;
                 intersection.textureX = parseInt(lengthToIntersection % constants.defaultWallHeight);
                 
                 return intersection;
@@ -418,7 +456,7 @@ var raycaster = function()
             
             // Draw white background
             drawing.square(mapOffsetX, mapOffsetY, 
-                           100, 100,
+                           80, 80,
                            drawing.colorRgb(255, 255, 255));
             
             // Draw the walls
@@ -581,16 +619,45 @@ var raycaster = function()
             rendering.redraw();
         };
         
+        // Make player strafe left or right
+        var strafe = function(left)
+        {
+            var angle = left 
+                ? new classes.angle(objects.player.angle.getValue() + 90)
+                : new classes.angle(objects.player.angle.getValue() - 90);
+            
+            var deltaX = Math.cos(angle.toRadians()) * constants.movementStep,
+                deltaY = Math.sin(angle.toRadians()) * constants.movementStep,
+                intersection = rendering.raycasting.findWall(angle);
+                
+            if (!intersection || intersection.distance > 20) {
+                objects.player.x = Math.round(objects.player.x + deltaX);
+                objects.player.y = Math.round(objects.player.y - deltaY);
+            }
+            
+            rendering.redraw();
+        };
+        
         /****************** / Public methods / ******************/
         // Update movement
         var update = function()
         {
             if (objects.keys.arrowLeft.down) {
-                turn(constants.turningStep);
+                if (objects.keys.shift.down) {
+                    strafe(true);
+                }
+                else {
+                    turn(constants.turningStep);
+                }
             }
             
             if (objects.keys.arrowRight.down) {
-                turn(-constants.turningStep);
+                if (objects.keys.shift.down) {
+                    strafe(false);
+                }
+                else {
+                    turn(-constants.turningStep);
+                }
             }
             
             if (objects.keys.arrowUp.down) {
@@ -609,22 +676,36 @@ var raycaster = function()
         // Bind the arrow keydown events
         var init = function()
         {
-            var keyDownHandler = function (e) {
+            // Prevents default event handling
+            var preventDefault = function(e) 
+            {
+                e.preventDefault 
+                    ? e.preventDefault() 
+                    : e.returnValue = false;
+            };
+            
+            // Handle keydown events
+            var keyDownHandler = function (e) 
+            {
                 var keyCode = e.keyCode || e.which;
                 
                 for (var name in objects.keys) {
                     if (objects.keys[name].code == keyCode) {
                         objects.keys[name].down = true;
+                        preventDefault(e);
                     }
                 }
             };
             
-            var keyUpHandler = function (e) {
+            // Handle keyup events
+            var keyUpHandler = function (e) 
+            {
                 var keyCode = e.keyCode || e.which;
                 
                 for (var name in objects.keys) {
                     if (objects.keys[name].code == keyCode) {
                         objects.keys[name].down = false;
+                        preventDefault(e);
                     }
                 }
             };
@@ -632,7 +713,7 @@ var raycaster = function()
             window.addEventListener("keydown", keyDownHandler, false);
             window.addEventListener("keyup", keyUpHandler, false);
             
-            // Bind key icons for mobile support
+            // Bind key icons to mobile devices which have no keyboard
             var keys = document.getElementsByClassName("keys");
 
             for (var i = 0, n = keys.length; i < n; ++i) {

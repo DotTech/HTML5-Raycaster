@@ -19,4 +19,5 @@ Changelog:
        Removed jQuery dependency (thanks to James Abley, https://github.com/jabley)
 (v0.4) Added quality setting which makes raycasting use lesser rays.
        Attempted to implement non-orthogonal walls, but it was a failed attempt
-(v0.5) Raycasting engine is rewritten and now supports non-orthogonal walls
+(v0.5) Raycasting engine is rewritten and now supports non-orthogonal walls.
+       Strafing implemented
