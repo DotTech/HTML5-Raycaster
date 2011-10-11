@@ -2,6 +2,9 @@
 <html lang="en">
 <head>
     <meta charset="utf-8" />
+    <meta name="description" content="This is a raycasting engine written in JavaScript and rendered on an HTML5 canvas" />
+    <meta name="author" content="Ruud van Falier" />
+
     <title>HTML5 Raycaster Demo</title>
     
     <link type="text/css" href="css/main.css" rel="stylesheet" />
@@ -14,6 +17,7 @@
         
         <h1>HTML5 Raycaster Demo</h1>
         <p>
+            This is a basic raycasting engine rendered on an HTML5 canvas.<br />
             If you don't see anything, you should update your browser...<br />
             <strong>Use arrow keys to turn and move, hold shift to strafe</strong>.<br />
             <br />
@@ -43,10 +47,12 @@
         </div>
         
         <div id="keys">
+            <div id="keyLeftStrafe" data-code="188" class="keys">&lsaquo;</div>
             <div id="keyLeft" data-code="37" class="keys">&larr;</div>
             <div id="keyUp" data-code="38" class="keys">&uarr;</div>
             <div id="keyDown" data-code="40" class="keys">&darr;</div>
             <div id="keyRight" data-code="39" class="keys">&rarr;</div>
+            <div id="keyRightStrafe" data-code="190" class="keys">&rsaquo;</div>
         </div>
         
         <footer>

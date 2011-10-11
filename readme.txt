@@ -5,9 +5,9 @@ Version:    0.5
 Demo:       http://www.dottech.nl/raycaster/
 Git:        https://github.com/Stribe/HTML5-Raycaster
 
-This is a very basic raycasting engine running on a HTML5 canvas.
+This is a very basic raycasting engine rendered on an HTML5 canvas.
 Currently supports non-orthogonal walls and texture mapping.
-The old (orthogonal walls) version is available from the v0.3 branch.
+The old (orthogonal walls) version is still available from the v0.3 branch.
 
 Feel free to use it for whatever you need it for.
 

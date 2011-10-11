@@ -250,6 +250,8 @@ var raycaster = function()
             arrowUp: new classes.keyButton(38),
             arrowRight: new classes.keyButton(39),
             arrowDown: new classes.keyButton(40),
+            lessThan: new classes.keyButton(188),
+            greaterThan: new classes.keyButton(190),
             esc: new classes.keyButton(27),
             shift: new classes.keyButton(16)
         },
@@ -670,6 +672,13 @@ var raycaster = function()
             
             if (objects.keys.arrowDown.down) {
                 walk(false);
+            }
+            
+            if (objects.keys.lessThan.down) {
+                strafe(true);
+            }
+            else if (objects.keys.greaterThan.down) {
+                strafe(false);
             }
             
             if (objects.keys.esc.down) {
