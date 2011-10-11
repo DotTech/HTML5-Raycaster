@@ -271,6 +271,9 @@ var raycaster = function()
             for (var i = 0; i < constants.texturesFiles.length; i++) {
                 objects.textures[i] = new Image();
                 objects.textures[i].src = constants.texturesFiles[i];
+                objects.textures[i].onload = function() {
+                    rendering.redraw();
+                };
             }
         }
     };
