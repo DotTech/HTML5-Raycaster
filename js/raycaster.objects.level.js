@@ -42,8 +42,8 @@ Raycaster.Objects.Level =
     ],
     
     sprites: [
-        new Raycaster.Classes.Sprite(160, 50, 2),
-        new Raycaster.Classes.Sprite(40, 160, 0),
-        new Raycaster.Classes.Sprite(280, 80, 0),
+        new Raycaster.Classes.Sprite(160, 50, 0, 2),
+        new Raycaster.Classes.Sprite(40, 160, 50, 0),
+        new Raycaster.Classes.Sprite(280, 80, 50, 0),
     ],
 }

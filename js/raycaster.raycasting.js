@@ -1,4 +1,10 @@
-// Raycasting methods
+/*
+//  Namespace:      Raycaster.Raycasting
+//  Description:    Functionality required for raycasting
+//
+//  Public methods: findWall(angle):    returns Intersection object or false
+//                  findSprite(angle):  returns Intersection object or false
+*/
 Raycaster.Raycasting = function()
 {
     var player = Raycaster.Objects.player;
@@ -11,8 +17,8 @@ Raycaster.Raycasting = function()
             deltaY = player.y - intersection.y,
             quadrant = 0;
         
-        if (deltaX <= 0 && deltaY >= 0) quadrant = 1;
-        if (deltaX > 0 && deltaY > 0) quadrant = 2;
+        if (deltaX < 0 && deltaY >= 0) quadrant = 1;
+        if (deltaX >= 0 && deltaY > 0) quadrant = 2;
         if (deltaX > 0 && deltaY <= 0) quadrant = 3;
         if (deltaX <= 0 && deltaY < 0) quadrant = 4;
         
@@ -97,7 +103,7 @@ Raycaster.Raycasting = function()
             lengthToIntersection = Math.sqrt(Math.pow(Math.abs(wallLine.x1 - intersection.x), 2) + Math.pow(Math.abs(wallLine.y1 - intersection.y), 2));
         
         intersection.resourceIndex = level.walls[index].textureId;
-        intersection.textureX = parseInt(lengthToIntersection % Raycaster.Constants.defaultWallHeight);
+        intersection.textureX = parseInt(lengthToIntersection % Raycaster.Objects.textures[intersection.resourceIndex].height);
         
         return intersection;
     }
@@ -110,28 +116,23 @@ Raycaster.Raycasting = function()
         for (var i = 0; i < level.sprites.length; i++) {
             // Create a imaginary plane on which the sprite is drawn
             // That way we can check for sprites in exactly the same way we check for walls
-            var planeAngle = new Raycaster.Classes.Angle(angle.degrees - 90);
-            
-            var x = level.sprites[i].x,
+            var planeAngle = new Raycaster.Classes.Angle(angle.degrees - 90),
+                x = level.sprites[i].x,
                 y = level.sprites[i].y,
                 sprite = Raycaster.Objects.sprites[level.sprites[i].id],
-                deltaX = Math.floor(Math.cos(planeAngle.toRadians()) * (sprite.width / 2)),
-                deltaY = Math.floor(Math.sin(planeAngle.toRadians()) * (sprite.width / 2)),
-                plane = new Raycaster.Classes.Vector(x - deltaX, y + deltaY, x + deltaX, y - deltaY);
+                delta = Raycaster.Utils.getDeltaXY(planeAngle, sprite.width / 2),
+                plane = new Raycaster.Classes.Vector(x - Math.floor(delta.x), y + Math.floor(delta.y), 
+                                                     x + Math.floor(delta.x), y - Math.floor(delta.y));
 
-            //drawing.line((x - deltaX) / 10, (y + deltaY) / 10, 
-            //             (x + deltaX) / 10, (y - deltaY) / 10, drawing.colorRgb(255, 0, 0));
-            
-            // Find intersection point on current wall
+            // Find intersection point on the plane
             var intersection = getIntersection(plane, angle);
             
             if (intersection) {
-            
-                // Determine which scanline of the sprite to draw for this intersection
+                // Determine which scanline of the sprite image to draw for this intersection
                 var lengthToIntersection = Math.sqrt(Math.pow(Math.abs(plane.x1 - intersection.x), 2) + Math.pow(Math.abs(plane.y1 - intersection.y), 2));
-                
+
                 intersection.textureX = parseInt(lengthToIntersection % sprite.width);
-                intersection.resourceIndex = i;
+                intersection.resourceIndex = level.sprites[i].id;
                 
                 return intersection;
             }

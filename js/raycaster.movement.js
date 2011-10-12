@@ -1,4 +1,10 @@
-// Contains all movement related functions
+/*
+//  Namespace:      Raycaster.Drawing
+//  Description:    Contains all movement related functions
+//
+//  Public methods: init()
+//                  update()
+*/
 Raycaster.Movement = function()
 {
     var player = Raycaster.Objects.player;
@@ -156,6 +162,8 @@ Raycaster.Movement = function()
         document.getElementById("chkLighting").addEventListener('change', Raycaster.engine.redraw);
         document.getElementById("chkMiniMap").addEventListener('change', Raycaster.engine.redraw);
         document.getElementById("chkSky").addEventListener('change', Raycaster.engine.redraw);
+        document.getElementById("chkFloor").addEventListener('change', Raycaster.engine.redraw);
+        document.getElementById("chkSprites").addEventListener('change', Raycaster.engine.redraw);
     };
     
     return {

@@ -21,6 +21,7 @@ Raycaster.Constants =
         "img/purplestone.png",
         "img/redbrick.png",
         "img/wood.png",
+        "img/test-texture.png",
     ],
     spriteFiles: [
         "img/barrel.png",
@@ -29,6 +30,6 @@ Raycaster.Constants =
         "img/pillar_mask.png"
     ],
     skyImage: "img/sky.jpg",
-    fpsFont: "bold 12px arial",
+    debugFont: "bold 12px arial",
     glIntervalTimeout: 50
 };

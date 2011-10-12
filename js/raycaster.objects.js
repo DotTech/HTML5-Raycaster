@@ -4,15 +4,15 @@
 */
 Raycaster.Objects = 
 {
-    // Defines player values
+    // Defines player parameters
     player: 
     {
-        x: 150,
-        y: 250,
-        angle: new Raycaster.Classes.Angle(85)
+        x: 194,
+        y: 353,
+        angle: new Raycaster.Classes.Angle(57)
     },
     
-    // Access the setting checkboxes
+    // Settings checkboxes states
     settings:
     {
         renderTextures: function() {
@@ -26,6 +26,12 @@ Raycaster.Objects =
         },
         renderSky: function() {
             return document.getElementById("chkSky").checked;
+        },
+        renderFloor: function() {
+            return document.getElementById("chkFloor").checked;
+        },
+        renderSprites: function() {
+            return document.getElementById("chkSprites").checked;
         }
     },
     
@@ -42,16 +48,23 @@ Raycaster.Objects =
     },
     
     centerOfScreen: new Raycaster.Classes.Point(Raycaster.Constants.screenWidth / 2, Raycaster.Constants.screenHeight / 2),
+    
     context: null,          // Reference to the canvas context
     gameloopInterval: null, // Reference to the interval that triggers the update functions
     redrawScreen: true,     // Wether it is necessary to redraw the scene
     textures: null,         // Array with texture Image objects
     sprites: null,          // Array with sprite Image objects
-    skyImage: new Image(),
+    skyImage: new Image(),  // Holds the image that is used for the sky background
     
-    // Loads the texture and sprite images in memory
+    /*
+    // Method:      loadResources
+    // Description: Loads the texture and sprite images in memory
+    // Parameters:  -
+    // Returns:     -
+    */
     loadResources: function() 
     {
+        // Load texture images
         Raycaster.Objects.textures = new Array();
         for (var i = 0; i < Raycaster.Constants.texturesFiles.length; i++) {
             Raycaster.Objects.textures[i] = new Image();
@@ -61,12 +74,14 @@ Raycaster.Objects =
             };
         }
         
+        // Load sprite images
         Raycaster.Objects.sprites = new Array();
         for (var i = 0; i < Raycaster.Constants.spriteFiles.length; i++) {
             Raycaster.Objects.sprites[i] = new Image();
             Raycaster.Objects.sprites[i].src = Raycaster.Constants.spriteFiles[i];
         }
         
+        // Load sky background image
         Raycaster.Objects.skyImage.src = Raycaster.Constants.skyImage;
         Raycaster.Objects.skyImage.onload = function() {
             Raycaster.Objects.redrawScreen = true;

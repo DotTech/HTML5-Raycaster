@@ -1,4 +1,7 @@
-// Basic canvas drawing functions
+/*
+//  Namespace:      Raycaster.Drawing
+//  Description:    Basic canvas drawing functions
+*/
 Raycaster.Drawing =
 {
     // Clear the screen

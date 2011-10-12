@@ -9,9 +9,10 @@ Raycaster.Classes =
         this.y = y;
     },
     
-    Sprite: function(x, y, id) {
+    Sprite: function(x, y, dy, id) {
         this.x = x;
         this.y = y;
+        this.dy = dy;
         this.id = id;
     },
     
@@ -28,6 +29,13 @@ Raycaster.Classes =
         this.x2 = x2;
         this.y2 = y2;
         this.textureId = textureId;
+    },
+    
+    VSliceDrawParams: function(dy1, dy2, sy1, sy2) {
+        this.dy1 = dy1;
+        this.dy2 = dy2;
+        this.sy1 = sy1;
+        this.sy2 = sy2;
     },
     
     Intersection: function() {
