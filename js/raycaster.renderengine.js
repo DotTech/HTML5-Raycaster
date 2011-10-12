@@ -20,8 +20,10 @@ Raycaster.RenderEngine = function()
     // Calculate viewport distance once
     Raycaster.Constants.distanceToViewport = Math.round(Raycaster.Constants.screenWidth / 2 / Math.tan(Raycaster.Constants.fieldOfView / 2 * (Math.PI / 180)));
     
-    /****************** / Private methods / *****************/
-    // Draw the debug information
+
+    /************* / Rendering of secondary stuff (sky, floor, map) / *****************/
+    
+    // Writes debug information to the screen
     var drawDebugInfo = function()
     {
         var elapsed = new Date().getTime() - lastFpsUpdate,
@@ -35,7 +37,7 @@ Raycaster.RenderEngine = function()
         Raycaster.Drawing.text("A: " + objects.player.angle.degrees, 590, 50, Raycaster.Drawing.colorRgb(255, 255, 255), Raycaster.Constants.debugFont);
     }
     
-    // Draw the mini map
+    // Draw the 2D top-view of the level
     var drawMiniMap = function() 
     {
         if (objects.settings.renderMiniMap()) {
@@ -106,8 +108,8 @@ Raycaster.RenderEngine = function()
         }
     }
     
-    // Floor casting is too slow at this point
-    // For that reason we use a gradient for the floor
+    // Draws the gradient for the floor
+    // Floor casting is too slow at this point, thats why i used a gradient
     var drawFloor = function()
     {
         if (objects.settings.renderFloor()) {
@@ -124,59 +126,10 @@ Raycaster.RenderEngine = function()
         }
     }
     
-    // Manipulate distance to counter "fishbowl effect"
-    var fixFishbowlEffect = function(vscan, distance)
-    {
-        var distortRemove = new classes.Angle(constants.fieldOfView / 2);
-        distortRemove.turn(-constants.angleBetweenRays * vscan);
-        
-        return distance * Math.cos(distortRemove.toRadians());
-    };
     
-    // Once we have the distance to the wall or sprite, this function calculates the parameters 
-    // that are needed to draw the vertical slice for it.
-    // It also accounts for leaving away parts of the wall if it exceeds the size of the viewport
-    // The following parameters are calculated:
-    // - dy1:   Starting point of the slice on the destination (the screen) 
-    // - dy2:   End point of the slice on the destination
-    // - sy1:   Starting point of the slice on the source (the texture image)
-    // - sy2:   End point of the slice on the source
-    var calcVSliceDrawParams = function(vscan, distance, orginalHeight, texture)
-    {
-        // Use distance to determine the size of the slice
-        var height = Math.floor(orginalHeight / distance * constants.distanceToViewport),
-            params = new classes.VSliceDrawParams();
-        
-        // If the slice is larger than the viewport height, we only need the visible section
-        // skipPixels indicates how many pixels from top and bottom towards the center can be skipped during rendering
-        var skipPixels = height > constants.screenHeight ? (height - constants.screenHeight) / 2 : 0;
-        
-        // Now calculate where to start and end the drawing
-        var scanlineStartY = parseInt(objects.centerOfScreen.y - (height - skipPixels * 2) / 2),
-            scanlineEndY = parseInt(objects.centerOfScreen.y + (height - skipPixels * 2) / 2);
-        
-        // Prevent the coordinates from being off-screen
-        params.dy1 = scanlineStartY < 0 ? 0 : scanlineStartY;
-        params.dy2 = scanlineEndY > constants.screenHeight ? constants.screenHeight : scanlineEndY;
-        
-        // Now calculate the params for the source image.
-        // Determine the scale of the visible slice compared to its original size
-        var scale = height / texture.height;
-        
-        // Calculate where to start copying from the source image
-        var offsetY = (skipPixels > 0) ? skipPixels / scale : 0;
-        if (offsetY >= texture.height / 2) {
-            offsetY = texture.height / 2 - 1;
-        }
-        
-        params.sy1 = offsetY;
-        params.sy2 = offsetY * 2;
-        
-        return params;
-    }
+    /****************** / Core rendering methods (walls, sprites) / *****************/
     
-    // Draw a vertical slice of a wall found at specified intersection
-    // TODO: Description, refactor method
+    // Search for a wall in given direction and draw the vertical scanline for it
     var drawWall = function(vscan, angle)
     {
         var intersection = Raycaster.Raycasting.findWall(angle);
@@ -213,8 +166,8 @@ Raycaster.RenderEngine = function()
         }
     }
     
-    // TODO: Description, refactor method
-    var drawSprite = function(vscan, angle)
+    // Search for sprites in direction 'angle' and draw the vertical scanline for them
+    var drawSprites = function(vscan, angle)
     {
         var intersection = Raycaster.Raycasting.findSprite(angle);
         
@@ -277,11 +230,64 @@ Raycaster.RenderEngine = function()
             angle = new classes.Angle(objects.player.angle.degrees + constants.fieldOfView / 2);
             
             for (var vscan = 0; vscan < constants.screenWidth; vscan++) {
-                drawSprite(vscan, angle);
+                drawSprites(vscan, angle);
                 angle.turn(-constants.angleBetweenRays);
             }
         }
     };
+    
+    // Manipulate distance to counter "fishbowl effect"
+    var fixFishbowlEffect = function(vscan, distance)
+    {
+        var distortRemove = new classes.Angle(constants.fieldOfView / 2);
+        distortRemove.turn(-constants.angleBetweenRays * vscan);
+        
+        return distance * Math.cos(distortRemove.toRadians());
+    };
+    
+    // Once we have the distance to the wall or sprite, this function calculates the parameters 
+    // that are needed to draw the vertical slice for it.
+    // It also accounts for leaving away parts of the wall if it exceeds the size of the viewport
+    // The following parameters are calculated:
+    // - dy1:   Starting point of the slice on the destination (the screen) 
+    // - dy2:   End point of the slice on the destination
+    // - sy1:   Starting point of the slice on the source (the texture image)
+    // - sy2:   End point of the slice on the source
+    // - yOff:  
+    var calcVSliceDrawParams = function(vscan, distance, orginalHeight, texture)
+    {
+        // Use distance to determine the size of the slice
+        var height = Math.floor(orginalHeight / distance * constants.distanceToViewport),
+            params = new classes.VSliceDrawParams();
+        
+        // If the slice is larger than the viewport height, we only need the visible section
+        // skipPixels indicates how many pixels from top and bottom towards the center can be skipped during rendering
+        var skipPixels = height > constants.screenHeight ? (height - constants.screenHeight) / 2 : 0;
+        
+        // Now calculate where to start and end the drawing
+        var scanlineStartY = parseInt(objects.centerOfScreen.y - (height - skipPixels * 2) / 2),
+            scanlineEndY = parseInt(objects.centerOfScreen.y + (height - skipPixels * 2) / 2);
+        
+        // Prevent the coordinates from being off-screen
+        params.dy1 = scanlineStartY < 0 ? 0 : scanlineStartY;
+        params.dy2 = scanlineEndY > constants.screenHeight ? constants.screenHeight : scanlineEndY;
+        
+        // Now calculate the params for the source image.
+        // Determine the scale of the visible slice compared to its original size
+        var scale = height / texture.height;
+        
+        // Calculate where to start copying from the source image
+        var offsetY = (skipPixels > 0) ? skipPixels / scale : 0;
+        if (offsetY >= texture.height / 2) {
+            offsetY = texture.height / 2 - 1;
+        }
+        
+        params.sy1 = offsetY;
+        params.sy2 = offsetY * 2;
+        
+        return params;
+    }
+    
     
     /****************** / Public methods / *****************/
     // Tell renderengine that a redraw is required

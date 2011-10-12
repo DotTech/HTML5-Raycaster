@@ -104,6 +104,7 @@ Raycaster.Raycasting = function()
         
         intersection.resourceIndex = level.walls[index].textureId;
         intersection.textureX = parseInt(lengthToIntersection % Raycaster.Objects.textures[intersection.resourceIndex].height);
+        intersection.levelObjectId = index;
         
         return intersection;
     }
@@ -130,9 +131,10 @@ Raycaster.Raycasting = function()
             if (intersection) {
                 // Determine which scanline of the sprite image to draw for this intersection
                 var lengthToIntersection = Math.sqrt(Math.pow(Math.abs(plane.x1 - intersection.x), 2) + Math.pow(Math.abs(plane.y1 - intersection.y), 2));
-
+                
                 intersection.textureX = parseInt(lengthToIntersection % sprite.width);
                 intersection.resourceIndex = level.sprites[i].id;
+                intersection.levelObjectId = i;
                 
                 return intersection;
             }

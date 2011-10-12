@@ -9,10 +9,10 @@ Raycaster.Classes =
         this.y = y;
     },
     
-    Sprite: function(x, y, dy, id) {
+    Sprite: function(x, y, yOffset, id) {
         this.x = x;
         this.y = y;
-        this.dy = dy;
+        this.yOffset = yOffset;
         this.id = id;
     },
     
@@ -42,7 +42,8 @@ Raycaster.Classes =
         this.x = 0;             // X coordinate of this intersection
         this.y = 0;             // Y coordinate of this intersection
         this.distance = 0;      // Distance to the intersection
-        this.resourceId = 0;    // index of texture or sprite
+        this.resourceId = 0;    // index of texture or sprite image in Objects namespace
+        this.levelObjectId = 0; // index of texture or sprite in Objects.Level namespace
         this.textureX = 0;      // X coordinate of the texture scanline to draw
     },
     

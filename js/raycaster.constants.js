@@ -20,8 +20,7 @@ Raycaster.Constants =
         "img/mossy.png",
         "img/purplestone.png",
         "img/redbrick.png",
-        "img/wood.png",
-        "img/test-texture.png",
+        "img/wood.png"
     ],
     spriteFiles: [
         "img/barrel.png",
