@@ -2,14 +2,14 @@ HTML5 Raycaster Demo
 
 Author:     Ruud van Falier (ruud@dottech.nl)
 Version:    0.6
-Released:   11 october 2011
+Released:   -
 
 Demo:       http://www.dottech.nl/raycaster/
 Git:        https://github.com/Stribe/HTML5-Raycaster
 
-This is a very basic raycasting engine rendered on an HTML5 canvas.
-Currently supports non-orthogonal walls and texture mapping.
-The old (orthogonal walls) version is still available from the v0.3 branch.
+This is a very basic raycasting engine running on a HTML5 canvas.
+Currently supports non-orthogonal walls, texture mapping and sprite rendering.
+The old (orthogonal walls) version is available from the v0.3 branch.
 
 Feel free to use it for whatever you need it for.
 
@@ -25,10 +25,11 @@ Changelog:
         Strafing implemented.
         Quality settings removed because it needs fixing.
 (0.5.1) Added FPS counter
-(0.5.2) Experimented with floor casting, but it costs too much performance (ended up with 2 fps)
+(0.5.2) Experimented with floor casting, but it costs too much performance.
         For that reason a gradient is used as floor.
         Added sky background
-(0.6)   Implemented sprite rendering
+(0.6)   Implemented sprite rendering.
+        Refactored the code so that it could be stored in seperate files and added more comments
 
 Planned features:
 - Sectors
