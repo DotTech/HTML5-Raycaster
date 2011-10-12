@@ -274,8 +274,8 @@ var raycaster = function()
         
         spriteLocations: [
             new classes.sprite(160, 50, 2),
-            new classes.sprite(120, 60, 0),
-            new classes.sprite(190, 80, 0),
+            new classes.sprite(40, 160, 0),
+            new classes.sprite(280, 80, 0),
         ],
         
         sprites: null,
@@ -524,9 +524,14 @@ var raycaster = function()
                     // Find intersection point on current wall
                     var intersection = getIntersection(plane, angle);
                     
-                    // If wall distance is less than previously found walls, use it
                     if (intersection) {
+                    
+                        // Determine which scanline of the sprite to draw for this intersection
+                        var lengthToIntersection = Math.sqrt(Math.pow(Math.abs(plane.x1 - intersection.x), 2) + Math.pow(Math.abs(plane.y1 - intersection.y), 2));
+                        
+                        intersection.textureX = parseInt(lengthToIntersection % sprite.width);
                         intersection.resourceIndex = i;
+                        
                         return intersection;
                     }
                 }
@@ -704,59 +709,61 @@ var raycaster = function()
                 var lindex = intersection.resourceIndex,                // index for spriteLocation array
                     sindex = objects.spriteLocations[lindex].spriteId;  // index for sprites array
                 
-                if (!objects.spriteLocations[lindex].isRendered) {
+                // Remove distortion (counter fishbowl effect)
+                // TODO: Check if this is needed for sprites
+                var distortRemove = new classes.angle(constants.fieldOfView / 2);
+                distortRemove.turn(-constants.angleBetweenRays * vscan);
+                intersection.distance *= Math.cos(distortRemove.toRadians());
                 
-                    // Remove distortion (counter fishbowl effect)
-                    // TODO: Check if this is needed for sprites
-                    var distortRemove = new classes.angle(constants.fieldOfView / 2);
-                    distortRemove.turn(-constants.angleBetweenRays * vscan);
-                    intersection.distance *= Math.cos(distortRemove.toRadians());
+                // Use distance to determine the size of the sprite
+                var spriteWidth = Math.floor(objects.sprites[sindex].width / intersection.distance * constants.distanceToViewport),
+                    spriteHeight = Math.floor(objects.sprites[sindex].height / intersection.distance * constants.distanceToViewport);
                     
-                    // Use distance to determine the size of the sprite
-                    var spriteWidth = Math.floor(objects.sprites[sindex].width / intersection.distance * constants.distanceToViewport),
-                        spriteHeight = Math.floor(objects.sprites[sindex].height / intersection.distance * constants.distanceToViewport);
+                // If a wall slice is larger than the viewport height, we only need the visible section
+                // skipPixels indicates how many pixels from top and bottom towards the center can be skipped during rendering
+                var skipPixels = spriteHeight > constants.screenHeight ? (spriteHeight - constants.screenHeight) / 2 : 0,
+                    spriteStartY = parseInt(objects.centerOfScreen.y - (spriteHeight - skipPixels * 2) / 2),
+                    spriteEndY = parseInt(objects.centerOfScreen.y + (spriteHeight - skipPixels * 2) / 2);
+                
+                // Prevent the coordinates from being off screen
+                spriteStartY = spriteStartY < 0 ? 0 : spriteStartY;
+                spriteEndY = spriteEndY > constants.screenHeight ? constants.screenHeight : spriteEndY;
+                
+                // The visible scale of a sprite compared to its original size
+                var spriteScale = spriteHeight / objects.sprites[sindex].height;
+                
+                var offsetY = (skipPixels > 0) ? skipPixels / spriteScale : 0;
+                if (offsetY >= objects.sprites[sindex].height / 2) {
+                    offsetY = objects.sprites[sindex].height / 2 - 1;
+                }
+                
+                objects.context.drawImage(objects.sprites[sindex], 
+                                          intersection.textureX, offsetY, 1, objects.sprites[sindex].height - offsetY * 2,
+                                          vscan, spriteStartY, 1, spriteEndY - spriteStartY);
+                                       
+                //objects.context.drawImage(objects.sprites[sindex], 
+                //                          0, offsetY, objects.sprites[sindex].width, objects.sprites[sindex].height - offsetY * 2,
+                //                          vscan, spriteStartY, spriteWidth, spriteEndY - spriteStartY);
+                
+                // Make sprites in the distance appear darker
+                if (objects.settings.renderLighting()) {
+                    if (intersection.distance > 100) {
+                        // Calculate opacity
+                        var colorDivider = parseFloat(intersection.distance / 200); 
+                        colorDivider = (colorDivider > 5) ? 5 : colorDivider;
+                        var opacity = parseFloat(1 - 1 / colorDivider);
                         
-                    // If a wall slice is larger than the viewport height, we only need the visible section
-                    // skipPixels indicates how many pixels from top and bottom towards the center can be skipped during rendering
-                    var skipPixels = spriteHeight > constants.screenHeight ? (spriteHeight - constants.screenHeight) / 2 : 0,
-                        spriteStartY = parseInt(objects.centerOfScreen.y - (spriteHeight - skipPixels * 2) / 2),
-                        spriteEndY = parseInt(objects.centerOfScreen.y + (spriteHeight - skipPixels * 2) / 2);
-                
-                    // Prevent the coordinates from being off screen
-                    spriteStartY = spriteStartY < 0 ? 0 : spriteStartY;
-                    spriteEndY = spriteEndY > constants.screenHeight ? constants.screenHeight : spriteEndY;
-                
-                    // The visible scale of a sprite compared to its original size
-                    var spriteScale = spriteHeight / objects.sprites[sindex].height;
-                    
-                    var offsetY = (skipPixels > 0) ? skipPixels / spriteScale : 0;
-                    if (offsetY >= objects.sprites[sindex].height / 2) {
-                        offsetY = objects.sprites[sindex].height / 2 - 1;
-                    }
-                    
-                    objects.context.drawImage(objects.sprites[sindex], 
-                                              0, offsetY, objects.sprites[sindex].width, objects.sprites[sindex].height - offsetY * 2,
-                                              vscan, spriteStartY, spriteWidth, spriteEndY - spriteStartY);
-                    
-                    // Make sprites in the distance appear darker
-                    if (objects.settings.renderLighting()) {
-                        if (intersection.distance > 100) {
-                            var colorDivider = parseFloat(intersection.distance / 200); 
-                            colorDivider = (colorDivider > 5) ? 5 : colorDivider;
-                            var opacity = parseFloat(1 - 1 / colorDivider);
-                            
-                            if (opacity > 0) {
-                                objects.context.globalAlpha = opacity;
-                                objects.context.drawImage(objects.sprites[sindex + 1], 
-                                                          0, offsetY, objects.sprites[sindex].width, objects.sprites[sindex].height - offsetY * 2,
-                                                          vscan, spriteStartY, spriteWidth, spriteEndY - spriteStartY);
-                                objects.context.globalAlpha = 1;
-                            }
+                        // Draw a black mask version of the sprite using the calculated opacity
+                        if (opacity > 0) {
+                            objects.context.globalAlpha = opacity;
+                            objects.context.drawImage(objects.sprites[sindex + 1], 
+                                                      intersection.textureX, offsetY, 1, objects.sprites[sindex].height - offsetY * 2,
+                                                      vscan, spriteStartY, 1, spriteEndY - spriteStartY);
+                            objects.context.globalAlpha = 1;
                         }
                     }
-                    
-                    objects.spriteLocations[lindex].isRendered = true;
                 }
+                    
             }
         }
         
@@ -782,17 +789,18 @@ var raycaster = function()
             for (var vscan = 0; vscan < constants.screenWidth; vscan++) 
             {
                 drawWall(vscan, angle);
+                drawSprite(vscan, angle);
                 angle.turn(-constants.angleBetweenRays);
             }
             
-            angle = new classes.angle(objects.player.angle.getValue() + constants.fieldOfView / 2);
+            /*angle = new classes.angle(objects.player.angle.getValue() + constants.fieldOfView / 2);
             
             // Draw visible sprites
             for (var vscan = 0; vscan < constants.screenWidth; vscan++) 
             {
                 drawSprite(vscan, angle);
                 angle.turn(-constants.angleBetweenRays);
-            }
+            }*/
             
             // Reset sprites rendered state
             for (var i = 0; i < objects.spriteLocations.length; i++) {
