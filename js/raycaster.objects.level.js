@@ -13,7 +13,12 @@ Raycaster.Objects.Level =
         new Raycaster.Classes.Wall(790, 700, 700, 790, 1),
         new Raycaster.Classes.Wall(10, 700, 100, 790, 1),
         
-        // Colored stones west
+        // Dent in the northern outer wall
+        new Raycaster.Classes.Wall(240, 10, 300, 84, 1),
+        new Raycaster.Classes.Wall(300, 84, 410, 84, 1),
+        new Raycaster.Classes.Wall(410, 84, 470, 10, 1),
+        
+        // Colored stones south-west
         new Raycaster.Classes.Wall(100, 420, 200, 700, 2),
         new Raycaster.Classes.Wall(100, 420, 120, 400, 2),
         new Raycaster.Classes.Wall(120, 400, 160, 400, 2),
@@ -26,7 +31,6 @@ Raycaster.Objects.Level =
         new Raycaster.Classes.Wall(390, 730, 200, 700, 2),
         
         // Wooden walls in the middle
-        new Raycaster.Classes.Wall(300, 300, 340, 300, 7),
         new Raycaster.Classes.Wall(340, 300, 380, 320, 7),
         new Raycaster.Classes.Wall(380, 320, 420, 360, 7),
         new Raycaster.Classes.Wall(420, 360, 400, 440, 7),
@@ -38,15 +42,14 @@ Raycaster.Objects.Level =
         new Raycaster.Classes.Wall(580, 500, 560, 280, 7),
         new Raycaster.Classes.Wall(560, 280, 500, 220, 7),
         new Raycaster.Classes.Wall(500, 220, 340, 190, 7),
-        new Raycaster.Classes.Wall(340, 190, 300, 300, 7),
+        new Raycaster.Classes.Wall(340, 190, 340, 300, 7),
     ],
     
     sprites: [
-        new Raycaster.Classes.Sprite(370, 170, 0, 2),
-        new Raycaster.Classes.Sprite(370, 120, 0, 2),
-        new Raycaster.Classes.Sprite(370, 70, 0, 2),
-        /*new Raycaster.Classes.Sprite(200, 50, 30, 0),
-        new Raycaster.Classes.Sprite(40, 160, 50, 0),
-        new Raycaster.Classes.Sprite(280, 80, 50, 0),*/
+        new Raycaster.Classes.Sprite(355, 171, 2),
+        new Raycaster.Classes.Sprite(355, 137, 2),
+        new Raycaster.Classes.Sprite(355, 103, 2),
+        new Raycaster.Classes.Sprite(140, 380, 0),
+        new Raycaster.Classes.Sprite(390, 370, 0),
     ],
 }

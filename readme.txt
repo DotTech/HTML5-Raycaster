@@ -9,6 +9,8 @@ Git:        https://github.com/Stribe/HTML5-Raycaster
 
 This is a very basic raycasting engine running on a HTML5 canvas.
 Currently supports non-orthogonal walls, texture mapping and sprite rendering.
+FPS has dropped quite severely since sprites were added and i hope to be able
+to improve on this after planned analysis and implemention of sectors.
 The old (orthogonal walls) version is available from the v0.3 branch.
 
 Feel free to use it for whatever you need it for.
@@ -28,9 +30,14 @@ Changelog:
 (0.5.2) Experimented with floor casting, but it costs too much performance.
         For that reason a gradient is used as floor.
         Added sky background
-(0.6)   Implemented sprite rendering.
-        Refactored the code so that it could be stored in seperate files and added more comments
+(0.6)   Refactored the code so that it could be stored in seperate files and added more comments
+        Implemented sprite rendering
 
 Planned features:
 - Sectors
 - Variable height walls
+
+Optimizations/fixes planned:
+- When drawing a wall slice, remember intersection and use it during sprite rendering to avoid having to search for blocking walls
+- Sprites look kinda odd when drawn at angle=0, still haven't figured out why...
+- Overall performance analysis is required to find bottlenecks

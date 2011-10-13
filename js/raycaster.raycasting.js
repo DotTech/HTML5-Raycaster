@@ -27,7 +27,7 @@ Raycaster.Raycasting = function()
     
     // Calculate intersection point on a line (wall)
     // Formula found here: http://paulbourke.net/geometry/lineline2d/
-    var getIntersection = function(line, angle) 
+    var getIntersection = function(line, angle, dontRoundCoords) 
     {
         // Ray line
         var px1 = player.x,
@@ -49,13 +49,32 @@ Raycaster.Raycasting = function()
         // Check if intersection is located on the line
         // Use rounded coordinates here!
         var hit = true;
-        hit = (line.x1 >= line.x2) 
-            ? roundX <= line.x1 && roundX >= line.x2
-            : roundX >= line.x1 && roundX <= line.x2;
-        if (hit) {
-            hit = (line.y1 >= line.y2)
-                ? roundY <= line.y1 && roundY >= line.y2
-                : roundY >= line.y1 && roundY <= line.y2;
+            linex1 = Math.round(line.x1),
+            linex2 = Math.round(line.x2),
+            liney1 = Math.round(line.y1),
+            liney2 = Math.round(line.y2);
+        
+        // When looking for walls we want to round the coordinates before comparing them
+        if (!dontRoundCoords) {
+            hit = (linex1 >= linex2) 
+                ? roundX <= linex1 && roundX >= linex2
+                : roundX >= linex1 && roundX <= linex2;
+            if (hit) {
+                hit = (liney1 >= liney2)
+                    ? roundY <= liney1 && roundY >= liney2
+                    : roundY >= liney1 && roundY <= liney2;
+            }
+        }
+        // When looking for sprites we dont want the coords rounded, otherwise the result is not exact enough
+        else {
+            hit = (line.x1 >= line.x2) 
+                ? i.x <= line.x1 && i.x >= line.x2
+                : i.x >= line.x1 && i.x <= line.x2;
+            if (hit) {
+                hit = (line.y1 >= line.y2)
+                    ? i.y <= line.y1 && i.y >= line.y2
+                    : i.y >= line.y1 && i.y <= line.y2;
+            }
         }
         
         // The formula will also return the intersections that are behind the player
@@ -78,8 +97,49 @@ Raycaster.Raycasting = function()
         return i;
     };
 
+    // Find intersection on a specific sprite that is in the players field of view
+    var findSprite = function(angle, spriteId)
+    {
+        var level = Raycaster.Objects.Level;
+        
+        // Create a imaginary plane on which the sprite is drawn
+        // That way we can check for sprites in exactly the same way we check for walls
+        var planeAngle = new Raycaster.Classes.Angle(angle.degrees - 90),
+            x = level.sprites[spriteId].x,
+            y = level.sprites[spriteId].y,
+            sprite = Raycaster.Objects.sprites[level.sprites[spriteId].id],
+            delta = Raycaster.Utils.getDeltaXY(planeAngle, (sprite.width - 1) / 2),
+            plane = new Raycaster.Classes.Vector(x - delta.x, y + delta.y, 
+                                                 x + delta.x, y - delta.y);
+
+        // Find intersection point on the plane
+        var intersection = getIntersection(plane, angle, true);
+        
+        if (intersection) {
+            
+            // Check if the intersection is blocked by a wall
+            // Don't return sprite intersection if it's blocked
+            var wallint = findWall(angle);
+            if (wallint && wallint.distance < intersection.distance) {
+                return false;
+            }
+            
+            // Determine which scanline of the sprite image to draw for this intersection
+            var lengthToIntersection = Math.sqrt(Math.pow(Math.abs(plane.x1 - intersection.x), 2) + Math.pow(Math.abs(plane.y1 - intersection.y), 2));
+            
+            intersection.textureX = Math.floor(lengthToIntersection);
+            intersection.resourceIndex = level.sprites[spriteId].id;
+            intersection.levelObjectId = spriteId;
+            
+            return intersection;
+        }
+        
+        return false;
+    };
+    
+    
     /****************** / Public methods / *****************/    
-    // Find the wall that is closest to the player
+    // Find intersection on the wall that is closest to the player
     var findWall = function(angle)
     {
         var level = Raycaster.Objects.Level,
@@ -107,45 +167,34 @@ Raycaster.Raycasting = function()
         intersection.levelObjectId = index;
         
         return intersection;
-    }
+    };
     
-    // Find the sprites that are in the players field of view
-    var findSprite = function(angle)
+    // Find intersection for all sprites that are in viewing range
+    // Returns an array of intersection objects, sorted descending by distance
+    var findSprites = function(angle)
     {
-        var level = Raycaster.Objects.Level;
+        var intersections = new Array(),
+            level = Raycaster.Objects.Level;
         
+        // Test for every sprite wether its intersects with player's view angle
         for (var i = 0; i < level.sprites.length; i++) {
-            // Create a imaginary plane on which the sprite is drawn
-            // That way we can check for sprites in exactly the same way we check for walls
-            var planeAngle = new Raycaster.Classes.Angle(angle.degrees - 90),
-                x = level.sprites[i].x,
-                y = level.sprites[i].y,
-                sprite = Raycaster.Objects.sprites[level.sprites[i].id],
-                delta = Raycaster.Utils.getDeltaXY(planeAngle, sprite.width / 2),
-                plane = new Raycaster.Classes.Vector(x - Math.floor(delta.x), y + Math.floor(delta.y), 
-                                                     x + Math.floor(delta.x), y - Math.floor(delta.y));
-
-            // Find intersection point on the plane
-            var intersection = getIntersection(plane, angle);
-            
+            var intersection = findSprite(angle, i);
             if (intersection) {
-                // Determine which scanline of the sprite image to draw for this intersection
-                var lengthToIntersection = Math.sqrt(Math.pow(Math.abs(plane.x1 - intersection.x), 2) + Math.pow(Math.abs(plane.y1 - intersection.y), 2));
-                
-                intersection.textureX = parseInt(lengthToIntersection % sprite.width);
-                intersection.resourceIndex = level.sprites[i].id;
-                intersection.levelObjectId = i;
-                
-                return intersection;
+                intersections[intersections.length] = intersection;
             }
         }
         
-        return false;
-    }
+        // Sort the sprites by distance so that the once further away are drawn first
+        intersections.sort(function(i1, i2) {
+            return i2.distance - i1.distance;
+        });
+        
+        return intersections;
+    };
     
     // Expose public members
     return {
         findWall : findWall,
-        findSprite: findSprite
+        findSprites: findSprites
     };
 }();

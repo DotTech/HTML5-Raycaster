@@ -7,9 +7,9 @@ Raycaster.Objects =
     // Defines player parameters
     player: 
     {
-        x: 194,
-        y: 353,
-        angle: new Raycaster.Classes.Angle(57)
+        x: 85,
+        y: 70,
+        angle: new Raycaster.Classes.Angle(335)
     },
     
     // Settings checkboxes states

@@ -96,9 +96,11 @@ Raycaster.RenderEngine = function()
                 skyWidth -= leftOverWidth;
             }
             
-            context.drawImage(objects.skyImage,
-                              skyX, 0, skyWidth, constants.screenHeight / 2,
-                              0, 0, skyWidth, constants.screenHeight / 2);
+            if (skyWidth > 0) {
+                context.drawImage(objects.skyImage,
+                                  skyX, 0, skyWidth, constants.screenHeight / 2,
+                                  0, 0, skyWidth, constants.screenHeight / 2);
+            }
 
             if (leftOverWidth > 0) {
                 context.drawImage(objects.skyImage,
@@ -169,9 +171,14 @@ Raycaster.RenderEngine = function()
     // Search for sprites in direction 'angle' and draw the vertical scanline for them
     var drawSprites = function(vscan, angle)
     {
-        var intersection = Raycaster.Raycasting.findSprite(angle);
+        // Search for intersections with visible sprites
+        // When multiple sprites are found, they are returned in drawing order (furthest first)
+        var intersections = Raycaster.Raycasting.findSprites(angle);
         
-        if (intersection) {
+        // Loop through sprites and check for intersections
+        for (var i = 0; i < intersections.length; i++) {
+            var intersection = intersections[i];
+            
             // Counter fishbowl effect
             intersection.distance = fixFishbowlEffect(vscan, intersection.distance);
             
@@ -302,7 +309,7 @@ Raycaster.RenderEngine = function()
         if (objects.redrawScreen) {
             drawWorld();
             drawMiniMap();
-            drawDebugInfo();
+            //drawDebugInfo();
             objects.redrawScreen = false;
         }
     }

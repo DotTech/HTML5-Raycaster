@@ -10,6 +10,25 @@ Raycaster.Movement = function()
     var player = Raycaster.Objects.player;
     
     /****************** / Private methods / *****************/
+    // Returns closest intersection (wall or sprite) at specified angle.
+    // This is used for collision detection.
+    var findIntersection = function(angle)
+    {
+        var wall = Raycaster.Raycasting.findWall(angle),
+            sprites = Raycaster.Raycasting.findSprites(angle);
+        
+        if (sprites.length > 0) {
+            var sprite = sprites[sprites.length - 1];
+            
+            // Return intersection closest to player
+            return sprite.distance > wall.distance
+                ? wall
+                : sprite;
+        }
+        
+        return wall;
+    }
+    
     // Make the player turn by increasing its viewing angle
     var turn = function(angle)
     {
@@ -28,8 +47,8 @@ Raycaster.Movement = function()
             ? player.angle 
             : new Raycaster.Classes.Angle(player.angle.degrees + 180);
             
-        var intersection = Raycaster.Raycasting.findWall(angle);
-            
+        var intersection = findIntersection(angle);
+        
         if (!intersection || intersection.distance > 50) {
             player.x = Math.round(player.x + delta.x);
             player.y = Math.round(player.y - delta.y);
@@ -46,7 +65,7 @@ Raycaster.Movement = function()
             : new Raycaster.Classes.Angle(player.angle.degrees - 90);
         
         var delta = Raycaster.Utils.getDeltaXY(angle, Raycaster.Constants.movementStep);
-            intersection = Raycaster.Raycasting.findWall(angle);
+            intersection = findIntersection(angle);
         
         if (!intersection || intersection.distance > 20) {
             player.x = Math.round(player.x + delta.x);

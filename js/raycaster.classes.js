@@ -9,10 +9,9 @@ Raycaster.Classes =
         this.y = y;
     },
     
-    Sprite: function(x, y, yOffset, id) {
+    Sprite: function(x, y, id) {
         this.x = x;
         this.y = y;
-        this.yOffset = yOffset;
         this.id = id;
     },
     

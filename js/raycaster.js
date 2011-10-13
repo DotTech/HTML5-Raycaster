@@ -10,6 +10,8 @@
     
     This is a very basic raycasting engine running on a HTML5 canvas.
     Currently supports non-orthogonal walls, texture mapping and sprite rendering.
+    FPS has dropped quite severely since sprites were added and i hope to be able
+    to improve on this after planned analysis and implemention of sectors.
     The old (orthogonal walls) version is available from the v0.3 branch.
     
     Feel free to use it for whatever you need it for.
@@ -29,12 +31,18 @@
     (0.5.2) Experimented with floor casting, but it costs too much performance.
             For that reason a gradient is used as floor.
             Added sky background
-    (0.6)   Implemented sprite rendering.
-            Refactored the code so that it could be stored in seperate files and added more comments
+    (0.6)   Refactored the code so that it could be stored in seperate files and added more comments
+            Implemented sprite rendering (they still need to be the same height as the walls)
     
     Planned features:
     - Sectors
-    - Variable height walls
+    - Variable height for walls and sprites
+    
+    Optimizations/fixes planned:
+    - When drawing a wall slice, remember intersection and use it during sprite rendering to avoid having to search for blocking walls
+    - Sprites look kinda odd when drawn at angle=0, still haven't figured out why...
+      .. walls have some mis-draw too at angle 0
+    - Overall performance analysis is required to find bottlenecks
 */
 
 /*
@@ -54,15 +62,15 @@ var Raycaster = function()
         "raycaster.raycasting.js", "raycaster.renderengine.js", "raycaster.movement.js"
     ];
     
+    // Include all our javascript files
+    for (var i in includes) {
+        document.write('<script type="text/javascript" src="' + jsfolder + includes[i] + '"></script>');
+    }
+    
     // Public reference to the RenderEngine instance
     var engine = null;
     
-    /*
-    // Method:      start
-    // Description: Initialization method of the Raycaster application
-    // Parameters:  canvasId (string): id of the canvas element on which the scenes must be rendered
-    // Returns:     -
-    */
+    // Initialization method of the Raycaster application
     var start = function(canvasId) 
     {
         // Setup the canvas
@@ -85,22 +93,12 @@ var Raycaster = function()
         }, Raycaster.Constants.glIntervalTimeout);
     };
     
-    // Include all our javascript files
-    var head = document.getElementsByTagName("head")[0];
-    for (var i in includes) {
-        script = document.createElement("script");
-        script.setAttribute("type", "text/javascript");
-        script.setAttribute("src", jsfolder + includes[i]);
-        head.appendChild(script);
-    }
-    
     return {
         engine: engine,
         start: start
     };
 }();
 
-// Start the raycaster when DOM is loaded
 document.addEventListener("DOMContentLoaded", function() {
     Raycaster.start("raycaster");
 }, true);
