@@ -14,14 +14,23 @@ Raycaster.Movement = function()
     // This is used for collision detection.
     var findIntersection = function(angle)
     {
-        var wall = Raycaster.Raycasting.findWall(angle),
-            sprites = Raycaster.Raycasting.findSprites(angle);
+        if (Raycaster.Constants.noClipping) {
+            return false;
+        }
+        
+        var walls = Raycaster.Raycasting.findWalls(angle),
+            sprites = Raycaster.Objects.settings.renderSprites() ? Raycaster.Raycasting.findSprites(angle) : new Array(),
+            wall = false;
+        
+        if (walls.length > 0) {
+            wall = walls[walls.length - 1];
+        }
         
         if (sprites.length > 0) {
             var sprite = sprites[sprites.length - 1];
             
             // Return intersection closest to player
-            return sprite.distance > wall.distance
+            return wall && sprite.distance > wall.distance
                 ? wall
                 : sprite;
         }

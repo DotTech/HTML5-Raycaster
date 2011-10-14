@@ -131,12 +131,18 @@ Raycaster.RenderEngine = function()
     
     /****************** / Core rendering methods (walls, sprites) / *****************/
     
-    // Search for a wall in given direction and draw the vertical scanline for it
-    var drawWall = function(vscan, angle)
+    // Search for a walls in given direction and draw the vertical scanline for them.
+    // Because of variable wall height, if multiple walls are found they will be drawn on top each other.
+    // Walls furthest from the player are drawn first.
+    var drawWalls = function(vscan, angle)
     {
-        var intersection = Raycaster.Raycasting.findWall(angle);
+        // Search for intersections with visible walls
+        var intersections = Raycaster.Raycasting.findWalls(angle);
         
-        if (intersection) {
+        // Draw walls for each found intersection
+        for (var i = 0; i < intersections.length; i++) {
+            var intersection = intersections[i];
+            
             // Correction to counter fishbowl effect
             intersection.distance = fixFishbowlEffect(vscan, intersection.distance);
             
@@ -147,7 +153,7 @@ Raycaster.RenderEngine = function()
             if (objects.settings.renderTextures()) {
                 // Draw wall slice with texture
                 context.drawImage(texture, 
-                                  intersection.textureX, drawParams.sy1, 1, texture.height - drawParams.sy1,
+                                  intersection.textureX, drawParams.sy1, 1, drawParams.sy2 - drawParams.sy1,
                                   vscan, drawParams.dy1, 1, drawParams.dy2 - drawParams.dy1);
             }
             else {
@@ -156,14 +162,8 @@ Raycaster.RenderEngine = function()
             }
             
             // Make walls in the distance appear darker
-            if (objects.settings.renderLighting()) {
-                if (intersection.distance > 100) {
-                    var colorDivider = parseFloat(intersection.distance / 200); 
-                    colorDivider = (colorDivider > 5) ? 5 : colorDivider;
-                    var opacity = parseFloat(1 - 1 / colorDivider);
-                    
-                    drawing.lineSquare(vscan, drawParams.dy1, 1, drawParams.dy2, drawing.colorRgba(0, 0, 0, opacity))
-                }
+            if (objects.settings.renderLighting() && intersection.distance > 100) {
+                drawing.lineSquare(vscan, drawParams.dy1, 1, drawParams.dy2, drawing.colorRgba(0, 0, 0, calcDistanceOpacity(intersection.distance)))
             }
         }
     }
@@ -184,29 +184,24 @@ Raycaster.RenderEngine = function()
             
             // Calculate what to draw for this scanline
             var sprite = objects.sprites[intersection.resourceIndex],
-                drawParams = calcVSliceDrawParams(vscan, intersection.distance, sprite.height, sprite);
+                drawParams = calcVSliceDrawParams(vscan, intersection.distance, sprite.height, sprite, level.sprites[intersection.levelObjectId].yoff);
                 
             context.drawImage(sprite, 
-                              intersection.textureX, drawParams.sy1, 1, sprite.height - drawParams.sy2,
+                              intersection.textureX, drawParams.sy1, 1, drawParams.sy2 - drawParams.sy1,
                               vscan, drawParams.dy1, 1, drawParams.dy2 - drawParams.dy1);
 
             // Make sprites in the distance appear darker
-            if (objects.settings.renderLighting()) {
-                if (intersection.distance > 100) {
-                    // Calculate opacity
-                    var colorDivider = parseFloat(intersection.distance / 200); 
-                    colorDivider = (colorDivider > 5) ? 5 : colorDivider;
-                    var opacity = parseFloat(1 - 1 / colorDivider);
-                    
-                    // There is a black image mask of every sprite located in the sprites array, one index after the original sprite.
-                    // Draw the mask over the sprite using the calculated opacity
-                    if (opacity > 0) {
-                        context.globalAlpha = opacity;
-                        context.drawImage(objects.sprites[intersection.resourceIndex + 1], 
-                                          intersection.textureX, drawParams.sy1, 1, sprite.height - drawParams.sy2,
-                                          vscan, drawParams.dy1, 1, drawParams.dy2 - drawParams.dy1);
-                        context.globalAlpha = 1;
-                    }
+            if (objects.settings.renderLighting() && intersection.distance > 100) {
+                var opacity = calcDistanceOpacity(intersection.distance);
+                
+                // There is a black image mask of every sprite located in the sprites array, one index after the original sprite.
+                // Draw the mask over the sprite using the calculated opacity
+                if (opacity > 0) {
+                    context.globalAlpha = opacity;
+                    context.drawImage(objects.sprites[intersection.resourceIndex + 1], 
+                                      intersection.textureX, drawParams.sy1, 1, sprite.height - drawParams.sy2,
+                                      vscan, drawParams.dy1, 1, drawParams.dy2 - drawParams.dy1);
+                    context.globalAlpha = 1;
                 }
             }
         }
@@ -228,7 +223,7 @@ Raycaster.RenderEngine = function()
         
         // Render the walls
         for (var vscan = 0; vscan < constants.screenWidth; vscan++)  {
-            drawWall(vscan, angle);
+            drawWalls(vscan, angle);
             angle.turn(-constants.angleBetweenRays);
         }
         
@@ -252,47 +247,110 @@ Raycaster.RenderEngine = function()
         return distance * Math.cos(distortRemove.toRadians());
     };
     
-    // Once we have the distance to the wall or sprite, this function calculates the parameters 
-    // that are needed to draw the vertical slice for it.
-    // It also accounts for leaving away parts of the wall if it exceeds the size of the viewport
+    // Calculates the opacity for the black overlay image that is used to make objects in the distance appear darker
+    var calcDistanceOpacity = function(distance) 
+    {
+        var colorDivider = parseFloat(distance / 200); 
+        colorDivider = (colorDivider > 5) ? 5 : colorDivider;
+        
+        return parseFloat(1 - 1 / colorDivider);
+    };
+    
+    /*
+    // Method:      Raycaster.RenderEngine.calcVSliceDrawParams
+    // Description:
+    //   Once we know the distance to a wall or sprite, this function calculates the parameters 
+    //   that are rquired to draw the vertical slice for it.
+    //   It also accounts for leaving pixels of the object if it exceeds the size of the viewport
+    //
+    // Input parameters:
+    // - vscan:         the vertical scanline number
+    // - distance:      distance to object to draw
+    // - objectHeight:  orginal height of the object to draw
+    // - texture:       Image object containing the texture or sprite
+    // - yoff:          Y-offset used for positioning sprites
+    //
     // The following parameters are calculated:
     // - dy1:   Starting point of the slice on the destination (the screen) 
     // - dy2:   End point of the slice on the destination
     // - sy1:   Starting point of the slice on the source (the texture image)
     // - sy2:   End point of the slice on the source
-    // - yOff:  
-    var calcVSliceDrawParams = function(vscan, distance, orginalHeight, texture)
+    */
+    var calcVSliceDrawParams = function(vscan, distance, objectHeight, texture, yoff)
     {
         // Use distance to determine the size of the slice
-        var height = Math.floor(orginalHeight / distance * constants.distanceToViewport),
-            params = new classes.VSliceDrawParams();
+        var height = Math.floor(objectHeight / distance * constants.distanceToViewport),
+            params = new classes.VSliceDrawParams(),
+            destOffsetY = (!yoff) ? 0 : yoff;
+            scanlineOffsetY = 0;
         
-        // If the slice is larger than the viewport height, we only need the visible section
-        // skipPixels indicates how many pixels from top and bottom towards the center can be skipped during rendering
-        var skipPixels = height > constants.screenHeight ? (height - constants.screenHeight) / 2 : 0;
+        // Determine the scale of the visible slice compared to its original size
+        var scale = height / texture.height;
         
-        // Now calculate where to start and end the drawing
-        var scanlineStartY = parseInt(objects.centerOfScreen.y - (height - skipPixels * 2) / 2),
-            scanlineEndY = parseInt(objects.centerOfScreen.y + (height - skipPixels * 2) / 2);
+        // destOffsetY offsets the drawing position of the vertical slice.
+        // This is used for sprites that need to be placed at a certain height
+        if (destOffsetY != 0) {
+            scanlineOffsetY = destOffsetY * scale / 2;
+        }
+        
+        // Calculate where to start and end the drawing
+        var scanlineStartY = parseInt(objects.centerOfScreen.y - height / 2) + scanlineOffsetY,
+            scanlineEndY = parseInt(objects.centerOfScreen.y + height / 2) + scanlineOffsetY;
         
         // Prevent the coordinates from being off-screen
         params.dy1 = scanlineStartY < 0 ? 0 : scanlineStartY;
         params.dy2 = scanlineEndY > constants.screenHeight ? constants.screenHeight : scanlineEndY;
         
-        // Now calculate the params for the source image.
-        // Determine the scale of the visible slice compared to its original size
-        var scale = height / texture.height;
+        // Calculate where to start copying data from the source image
+        var srcStartY = 0,
+            srcEndY = texture.height;
         
-        // Calculate where to start copying from the source image
-        var offsetY = (skipPixels > 0) ? skipPixels / scale : 0;
-        if (offsetY >= texture.height / 2) {
-            offsetY = texture.height / 2 - 1;
+        // When sprite is Y-positioned we test wether parts of it are drawn off-screen.
+        // In that case we prevent the invisible part from being rendered.
+        if (destOffsetY != 0) {
+            // Check the bottom of the sprite
+            if (scanlineEndY > constants.screenHeight) {
+                var remove = (scanlineEndY - constants.screenHeight) / scale;
+                srcEndY -= remove;
+            }
+            
+            // Check the top of the sprite
+            if (scanlineStartY < 0) {
+                var remove = Math.abs(scanlineStartY) / scale;
+                srcStartY += remove;
+            }
         }
         
-        params.sy1 = offsetY;
-        params.sy2 = offsetY * 2;
+        // If the slice is larger than the viewport height, we only need to render the visible section.
+        // excessPixels indicates how many pixels from top and bottom towards the center can be skipped during rendering.
+        // We need to make sure we don't copy these pixels from the source image
+        if (height > constants.screenHeight) {
+            var excessPixels = (height - constants.screenHeight) / 2;    
+            
+            if (destOffsetY == 0) {
+                srcStartY = excessPixels / scale
+                if (srcStartY >= srcEndY / 2) {
+                    srcStartY = srcEndY / 2 - 1;
+                }
+                srcEndY -= srcStartY;
+            }
+            else if (destOffsetY > 0) {
+                // Handle clipping of the bottom of the sprite
+                srcStartY -= excessPixels / scale / 2;
+                if (srcStartY < 0) {
+                    srcStartY = 0;
+                }
+            }
+            else if (destOffsetY < 0) {
+                // Handle clipping of the top of the sprite
+                srcStartY += excessPixels / scale / 2;
+            }
+        }
         
-        return params;
+        params.sy1 = srcStartY;
+        params.sy2 = srcEndY;
+        
+        return params.sy2 > params.sy1 ? params : false;
     }
     
     

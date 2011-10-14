@@ -12,6 +12,7 @@ Raycaster.Constants =
     movementStep: 9,    // How much the player moves each step
     turningStep: 3,     // How fast the player turns
     distanceToViewport: 0,
+    noClipping: false,  // Allows player to walk through walls and objects
     texturesFiles: [
         "img/bluestone.png",
         "img/greystone.png",
@@ -26,7 +27,7 @@ Raycaster.Constants =
         "img/barrel.png",
         "img/barrel_mask.png",
         "img/pillar.png",
-        "img/pillar_mask.png"
+        "img/pillar_mask.png",
     ],
     skyImage: "img/sky.jpg",
     debugFont: "bold 12px arial",

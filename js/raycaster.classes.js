@@ -9,12 +9,6 @@ Raycaster.Classes =
         this.y = y;
     },
     
-    Sprite: function(x, y, id) {
-        this.x = x;
-        this.y = y;
-        this.id = id;
-    },
-    
     Vector: function(x1, y1, x2, y2) {
         this.x1 = x1;
         this.y1 = y1;
@@ -22,12 +16,29 @@ Raycaster.Classes =
         this.y2 = y2;
     },
     
-    Wall: function(x1, y1, x2, y2, textureId) {
-        this.x1 = x1;
+    /*
+    // Class:       Raycaster.Classes.Sprite
+    // Description: Parameters that define a sprite in the game world
+    */
+    Sprite: function(x, y, id, yoff) {
+        this.x = x;         // x,y location of sprite in the game world
+        this.y = y;
+        this.yoff = yoff;   // Offset for Y coordinate, to make it possible to place things on the floor or ceiling
+        this.id = id;       // index of sprite image in Constants.spriteFiles array
+    },
+    
+    /*
+    // Class:       Raycaster.Classes.Wall
+    // Description: Parameters that define a wall in the game world
+    */
+    Wall: function(x1, y1, x2, y2, h1, h2, textureId) {
+        this.x1 = x1;   // x1, y1: wall start point
         this.y1 = y1;
-        this.x2 = x2;
+        this.x2 = x2;   // x2, y2: wall end point
         this.y2 = y2;
-        this.textureId = textureId;
+        this.h1 = h1;   // wall height at start
+        this.h2 = h2;   // wall height at end
+        this.textureId = textureId; // id (index in Constants.texturesFiles array) of texture to use on this wall
     },
     
     VSliceDrawParams: function(dy1, dy2, sy1, sy2) {

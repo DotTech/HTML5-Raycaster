@@ -119,8 +119,8 @@ Raycaster.Raycasting = function()
             
             // Check if the intersection is blocked by a wall
             // Don't return sprite intersection if it's blocked
-            var wallint = findWall(angle);
-            if (wallint && wallint.distance < intersection.distance) {
+            var wallints = findWalls(angle);
+            if (wallints.length > 0 && wallints[wallints.length - 1].distance < intersection.distance) {
                 return false;
             }
             
@@ -137,39 +137,55 @@ Raycaster.Raycasting = function()
         return false;
     };
     
-    
-    /****************** / Public methods / *****************/    
-    // Find intersection on the wall that is closest to the player
-    var findWall = function(angle)
+    // Find intersection on a specific wall that is in the players field of view
+    var findWall = function(angle, wallId)
     {
         var level = Raycaster.Objects.Level,
-            intersection = false,
-            index = 0;
+            intersection = false;
         
-        for (var i = 0; i < level.walls.length; i++) {
-            // Find intersection point on current wall
-            var c = getIntersection(level.walls[i], angle);
+        // Find intersection point on current wall
+        var intersection = getIntersection(level.walls[wallId], angle);
+        
+        if (intersection) {
+            // Texture mapping
+            // Determine which scanline of the texture to draw for this intersection
+            var wallLine = level.walls[wallId],
+                lengthToIntersection = Math.sqrt(Math.pow(Math.abs(wallLine.x1 - intersection.x), 2) + Math.pow(Math.abs(wallLine.y1 - intersection.y), 2));
             
-            // If wall distance is less than previously found walls, use it
-            if (!intersection || c.distance < intersection.distance) {
-                intersection = c;
-                index = i;
-            }
+            intersection.resourceIndex = level.walls[wallId].textureId;
+            intersection.textureX = parseInt(lengthToIntersection % Raycaster.Objects.textures[intersection.resourceIndex].height);
+            intersection.levelObjectId = wallId;
         }
-        
-        // Texture mapping
-        // Determine which scanline of the texture to draw for this intersection
-        var wallLine = level.walls[index],
-            lengthToIntersection = Math.sqrt(Math.pow(Math.abs(wallLine.x1 - intersection.x), 2) + Math.pow(Math.abs(wallLine.y1 - intersection.y), 2));
-        
-        intersection.resourceIndex = level.walls[index].textureId;
-        intersection.textureX = parseInt(lengthToIntersection % Raycaster.Objects.textures[intersection.resourceIndex].height);
-        intersection.levelObjectId = index;
         
         return intersection;
     };
     
-    // Find intersection for all sprites that are in viewing range
+    
+    /****************** / Public methods / *****************/    
+    // Find intersection for all the walls that are in viewing range.
+    // Returns an array of intersection objects, sorted descending by distance
+    var findWalls = function(angle)
+    {
+        var intersections = new Array(),
+            level = Raycaster.Objects.Level;
+        
+        // Test for every wall wether it intersects with the player's view angle
+        for (var i = 0; i < level.walls.length; i++) {
+            var intersection = findWall(angle, i);
+            if (intersection) {
+                intersections[intersections.length] = intersection;
+            }
+        }
+        
+        // Sort the walls by distance so that the once further away are drawn first
+        intersections.sort(function(i1, i2) {
+            return i2.distance - i1.distance;
+        });
+        
+        return intersections;
+    };
+    
+    // Find intersection for all sprites that are in viewing range.
     // Returns an array of intersection objects, sorted descending by distance
     var findSprites = function(angle)
     {
@@ -194,7 +210,7 @@ Raycaster.Raycasting = function()
     
     // Expose public members
     return {
-        findWall : findWall,
+        findWalls : findWalls,
         findSprites: findSprites
     };
 }();

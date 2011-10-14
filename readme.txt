@@ -1,7 +1,7 @@
 HTML5 Raycaster Demo
 
 Author:     Ruud van Falier (ruud@dottech.nl)
-Version:    0.6
+Version:    0.7
 Released:   -
 
 Demo:       http://www.dottech.nl/raycaster/
@@ -15,7 +15,7 @@ The old (orthogonal walls) version is available from the v0.3 branch.
 
 Feel free to use it for whatever you need it for.
 
-Changelog:
+Revision log:
 (0.2)   Initial release.
         Uses "wolfenstein" technique to render the world.
         Has a grid-bases level and supports only orthogonal walls.
@@ -32,6 +32,10 @@ Changelog:
         Added sky background
 (0.6)   Refactored the code so that it could be stored in seperate files and added more comments
         Implemented sprite rendering
+(0.7)   - Tried to optimize performance by implementing sin/cos/tan lookup tables.
+          However, there are so many required values that it slowed things down in the end.
+        - Fixed bug that caused incorrect rendering of walls that are very close to the player
+        - Sprites can now be vertically positioned
 
 Planned features:
 - Sectors
