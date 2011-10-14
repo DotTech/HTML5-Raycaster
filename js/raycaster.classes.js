@@ -72,11 +72,11 @@ Raycaster.Classes =
         this.setValue = function(v) {
             self.degrees = parseFloat(v);
             
+            if (self.degrees > 359) {
+                self.degrees -= 359;
+            }
             if (self.degrees < 0) {
                 self.degrees += 359;
-            }
-            else if (self.degrees > 359) {
-                self.degrees -= 360;
             }
         };
         

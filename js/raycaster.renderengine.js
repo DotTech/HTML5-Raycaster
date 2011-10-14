@@ -155,7 +155,7 @@ Raycaster.RenderEngine = function()
             
             // Calculate what to draw for this scanline
             var texture = objects.textures[intersection.resourceIndex],
-                height = raycasting.getWallHeight(intersection.levelObjectId),
+                height = raycasting.getWallHeight(intersection),
                 drawParams = calcVSliceDrawParams(vscan, intersection.distance, height, texture, 0, true);
             
             if (objects.settings.renderTextures()) {
@@ -268,8 +268,8 @@ Raycaster.RenderEngine = function()
     // Method:      Raycaster.RenderEngine.calcVSliceDrawParams
     // Description:
     //   Once we know the distance to a wall or sprite, this function calculates the parameters 
-    //   that are rquired to draw the vertical slice for it.
-    //   It also accounts for leaving pixels of the object if it exceeds the size of the viewport
+    //   that are required to draw the vertical slice for it.
+    //   It also accounts for leaving away pixels of the object if it exceeds the size of the viewport
     //
     // Input parameters:
     // - vscan:             the vertical scanline number
@@ -308,8 +308,6 @@ Raycaster.RenderEngine = function()
         var scanlineEndY = parseInt((objects.centerOfScreen.y - horizonOffset) + height / 2),
             scanlineStartY = scanlineEndY - height;
         
-        // TODO: Sprites larger than 64px
-        
         // Prevent the coordinates from being off-screen
         params.dy1 = scanlineStartY < 0 ? 0 : scanlineStartY;
         params.dy2 = scanlineEndY > constants.screenHeight ? constants.screenHeight : scanlineEndY;
@@ -317,52 +315,22 @@ Raycaster.RenderEngine = function()
         // Determine the scale of the visible slice compared to its original size
         var scale = height / texture.height;
         
-
-        
-        // Calculate where to start copying data from the source image
+        // Now that we've determined the size and location of the scanline,
+        // we calculate which part of the texture image we need to render onto the scanline
+        // When part of the object is located outside of the screen we dont need to copy that part of the texture image.
         var srcStartY = 0,
             srcEndY = texture.height;
         
-        // When sprite is Y-positioned we test wether parts of it are drawn off-screen.
-        // In that case we prevent the invisible part from being rendered.
-        if (horizonOffset != 0) {
-            // Check the bottom of the sprite
-            if (scanlineEndY > constants.screenHeight) {
-                var remove = (scanlineEndY - constants.screenHeight) / scale;
-                srcEndY -= remove;
-            }
-            
-            // Check the top of the sprite
-            if (scanlineStartY < 0) {
-                var remove = Math.abs(scanlineStartY) / scale;
-                srcStartY += remove;
-            }
+        // Compensate for bottom part being offscreen
+        if (scanlineEndY > constants.screenHeight) {
+            var remove = (scanlineEndY - constants.screenHeight) / scale;
+            srcEndY -= remove;
         }
         
-        // If the slice is larger than the viewport height, we only need to render the visible section.
-        // excessPixels indicates how many pixels from top and bottom towards the center can be skipped during rendering.
-        // We need to make sure we don't copy these pixels from the source image
-        if (height > constants.screenHeight) {
-            var excessPixels = (height - constants.screenHeight) / 2;    
-            
-            if (horizonOffset == 0) {
-                srcStartY = excessPixels / scale
-                if (srcStartY >= srcEndY / 2) {
-                    srcStartY = srcEndY / 2 - 1;
-                }
-                srcEndY -= srcStartY;
-            }
-            else if (horizonOffset > 0) {
-                // Handle clipping of the bottom of the sprite
-                srcStartY -= excessPixels / scale / 2;
-                if (srcStartY < 0) {
-                    srcStartY = 0;
-                }
-            }
-            else if (horizonOffset < 0) {
-                // Handle clipping of the top of the sprite
-                srcStartY += excessPixels / scale / 2;
-            }
+        // Compensate for top part being offscreen
+        if (scanlineStartY < 0) {
+            var remove = Math.abs(scanlineStartY) / scale;
+            srcStartY += remove;
         }
         
         params.sy1 = srcStartY;

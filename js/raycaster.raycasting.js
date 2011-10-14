@@ -149,12 +149,19 @@ Raycaster.Raycasting = function()
         if (intersection) {
             // Texture mapping
             // Determine which scanline of the texture to draw for this intersection
-            var wallLine = level.walls[wallId],
-                lengthToIntersection = Math.sqrt(Math.pow(Math.abs(wallLine.x1 - intersection.x), 2) + Math.pow(Math.abs(wallLine.y1 - intersection.y), 2));
-            
+            var wall = level.walls[wallId],
+                length = Math.sqrt(Math.pow(Math.abs(wall.x1 - wall.x2), 2) + Math.pow(Math.abs(wall.y1 - wall.y2), 2)),
+                lengthToIntersection = Math.sqrt(Math.pow(Math.abs(wall.x1 - intersection.x), 2) + Math.pow(Math.abs(wall.y1 - intersection.y), 2));
+
             intersection.resourceIndex = level.walls[wallId].textureId;
-            intersection.textureX = parseInt(lengthToIntersection % Raycaster.Objects.textures[intersection.resourceIndex].height);
             intersection.levelObjectId = wallId;
+            
+            var textureWidth = Raycaster.Objects.textures[intersection.resourceIndex].width;
+            if (textureWidth > length) {
+                lengthToIntersection *= textureWidth / length;
+            }
+            
+            intersection.textureX = parseInt(lengthToIntersection % Raycaster.Objects.textures[intersection.resourceIndex].width);
         }
         
         return intersection;
@@ -210,9 +217,20 @@ Raycaster.Raycasting = function()
     
     // Walls have a start and end height
     // This method calculates the height of a wall at a specific intersection
-    var getWallHeight = function(wallId, intersection)
+    var getWallHeight = function(intersection)
     {
-        return Raycaster.Objects.Level.walls[wallId].h1;
+        var wall = Raycaster.Objects.Level.walls[intersection.levelObjectId];
+        
+        if (wall.h1 == wall.h2) {
+            return wall.h1;
+        }
+        
+        var length = Math.sqrt(Math.pow(Math.abs(wall.x1 - wall.x2), 2) + Math.pow(Math.abs(wall.y1 - wall.y2), 2)),
+            slope = (wall.h2 - wall.h1) / length,
+            lengthToIntersection = Math.sqrt(Math.pow(Math.abs(wall.x1 - intersection.x), 2) + Math.pow(Math.abs(wall.y1 - intersection.y), 2)),
+            height = wall.h1 + (lengthToIntersection * slope);
+        
+        return height;
     }
     
     

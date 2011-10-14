@@ -2,14 +2,15 @@ HTML5 Raycaster Demo
 
 Author:     Ruud van Falier (ruud@dottech.nl)
 Version:    0.7
-Released:   -
+Released:   14 october 2011
 
 Demo:       http://www.dottech.nl/raycaster/
 Git:        https://github.com/Stribe/HTML5-Raycaster
 
 This is a very basic raycasting engine running on a HTML5 canvas.
-Currently supports non-orthogonal walls, texture mapping and sprite rendering.
-FPS has dropped quite severely since sprites were added and i hope to be able
+Currently supports non-orthogonal walls with variable height,
+texture mapping and sprite rendering.
+FPS has dropped quite severely since more features were added and i hope to be able
 to improve on this after planned analysis and implemention of sectors.
 The old (orthogonal walls) version is available from the v0.3 branch.
 
@@ -31,17 +32,17 @@ Revision log:
         - Added sky background
 (0.6)   - Refactored the code so that it could be stored in seperate files and added more comments
         - Implemented sprite rendering
-(0.7)   - Tried to optimize performance by implementing sin/cos/tan lookup tables.
-          However, there are so many required values that it slowed things down in the end.
-        - Fixed bug that caused incorrect rendering of walls that are very close to the player
+(0.7)   - Fixed bug that caused incorrect rendering of walls that are very close to the player
         - Sprites rendering optimized and now supports vertically positioning of sprites
         - Variable wall height implemented
+          Also support angled height (a different start and end height)
 
 Planned features:
+- Repeating textures (instead of being stretched)
 - Sectors
-- Variable height walls
 
 Optimizations/fixes planned:
 - When drawing a wall slice, remember intersection and use it during sprite rendering to avoid having to search for blocking walls
-- Sprites look kinda odd when drawn at angle=0, still haven't figured out why...
+- There is a drawing bug around angle 0 and i have yet to figure out the cause
 - Overall performance analysis is required to find bottlenecks
+- Sprites are not visible behind walls with lower height than the sprite

@@ -7,8 +7,8 @@ Raycaster.Objects =
     // Defines player parameters
     player: 
     {
-        x: 85,
-        y: 370,
+        x: 45,
+        y: 395,
         angle: new Raycaster.Classes.Angle(50)
     },
     

@@ -3,14 +3,15 @@
     
     Author:     Ruud van Falier (ruud@dottech.nl)
     Version:    0.7
-    Released:   -
+    Released:   14 october 2011
     
     Demo:       http://www.dottech.nl/raycaster/
     Git:        https://github.com/Stribe/HTML5-Raycaster
     
     This is a very basic raycasting engine running on a HTML5 canvas.
-    Currently supports non-orthogonal walls, texture mapping and sprite rendering.
-    FPS has dropped quite severely since sprites were added and i hope to be able
+    Currently supports non-orthogonal walls with variable height,
+    texture mapping and sprite rendering.
+    FPS has dropped quite severely since more features were added and i hope to be able
     to improve on this after planned analysis and implemention of sectors.
     The old (orthogonal walls) version is available from the v0.3 branch.
     
@@ -32,7 +33,7 @@ var Raycaster = function()
     var jsfolder = "js/",
         includes = [
         "raycaster.constants.js", "raycaster.classes.js", "raycaster.objects.js", 
-        "raycaster.objects.level.walltest.js", "raycaster.drawing.js", "raycaster.utils.js", 
+        "raycaster.objects.level.js", "raycaster.drawing.js", "raycaster.utils.js", 
         "raycaster.raycasting.js", "raycaster.renderengine.js", "raycaster.movement.js"
     ];
     
@@ -75,8 +76,4 @@ var Raycaster = function()
 
 document.addEventListener("DOMContentLoaded", function() {
     Raycaster.start("raycaster");
-    
-    if (location.href.substr(0, 7) == "file://") {
-        document.getElementById("introduction").style.display = "none";
-    }
 }, true);
