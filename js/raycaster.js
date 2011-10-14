@@ -32,7 +32,7 @@ var Raycaster = function()
     var jsfolder = "js/",
         includes = [
         "raycaster.constants.js", "raycaster.classes.js", "raycaster.objects.js", 
-        "raycaster.objects.level.js", "raycaster.drawing.js", "raycaster.utils.js", 
+        "raycaster.objects.level.walltest.js", "raycaster.drawing.js", "raycaster.utils.js", 
         "raycaster.raycasting.js", "raycaster.renderengine.js", "raycaster.movement.js"
     ];
     
@@ -75,4 +75,8 @@ var Raycaster = function()
 
 document.addEventListener("DOMContentLoaded", function() {
     Raycaster.start("raycaster");
+    
+    if (location.href.substr(0, 7) == "file://") {
+        document.getElementById("introduction").style.display = "none";
+    }
 }, true);

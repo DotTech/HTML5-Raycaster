@@ -15,6 +15,7 @@ Raycaster.RenderEngine = function()
         drawing = Raycaster.Drawing,
         classes = Raycaster.Classes,
         level = Raycaster.Objects.Level,
+        raycasting = Raycaster.Raycasting,
         lastFpsUpdate = new Date().getTime();
     
     // Calculate viewport distance once
@@ -26,15 +27,17 @@ Raycaster.RenderEngine = function()
     // Writes debug information to the screen
     var drawDebugInfo = function()
     {
-        var elapsed = new Date().getTime() - lastFpsUpdate,
-            fps = Math.round(1000 / elapsed),
-            fpsText = fps + " fps";
-        
-        Raycaster.Drawing.text(fpsText, 590, 10, Raycaster.Drawing.colorRgb(255, 255, 255), Raycaster.Constants.debugFont);
-        lastFpsUpdate = new Date().getTime();
-        
-        Raycaster.Drawing.text("X: " + Math.round(objects.player.x) + " Y: " + Math.round(objects.player.y), 550, 30, Raycaster.Drawing.colorRgb(255, 255, 255), Raycaster.Constants.debugFont);
-        Raycaster.Drawing.text("A: " + objects.player.angle.degrees, 590, 50, Raycaster.Drawing.colorRgb(255, 255, 255), Raycaster.Constants.debugFont);
+        if (constants.displayDebugInfo) {
+            var elapsed = new Date().getTime() - lastFpsUpdate,
+                fps = Math.round(1000 / elapsed),
+                fpsText = fps + " fps";
+            
+            Raycaster.Drawing.text(fpsText, 590, 10, Raycaster.Drawing.colorRgb(255, 255, 255), Raycaster.Constants.debugFont);
+            lastFpsUpdate = new Date().getTime();
+            
+            Raycaster.Drawing.text("X: " + Math.round(objects.player.x) + " Y: " + Math.round(objects.player.y), 550, 30, Raycaster.Drawing.colorRgb(255, 255, 255), Raycaster.Constants.debugFont);
+            Raycaster.Drawing.text("A: " + objects.player.angle.degrees, 590, 50, Raycaster.Drawing.colorRgb(255, 255, 255), Raycaster.Constants.debugFont);
+        }
     }
     
     // Draw the 2D top-view of the level
@@ -71,14 +74,18 @@ Raycaster.RenderEngine = function()
             
             for (var i = 0; i < constants.screenWidth; i += rayStep) 
             {
-                var intersection = Raycaster.Raycasting.findWall(angle),
-                    deltaX = Math.floor(Math.cos(angle.toRadians()) * (Math.abs(intersection.distance) / shrinkFactor)),
-                    deltaY = Math.floor(Math.sin(angle.toRadians()) * (Math.abs(intersection.distance) / shrinkFactor));
+                var intersections = raycasting.findWalls(angle);
                 
-                drawing.line(mapOffsetX + playerX, mapOffsetY + playerY, 
-                             playerX + deltaX, playerY - deltaY, drawing.colorRgb(200, 200, 0));
+                if (intersections.length > 0) {
+                    var intersection = intersections[intersections.length - 1],
+                        deltaX = Math.floor(Math.cos(angle.toRadians()) * (Math.abs(intersection.distance) / shrinkFactor)),
+                        deltaY = Math.floor(Math.sin(angle.toRadians()) * (Math.abs(intersection.distance) / shrinkFactor));
                 
-                angle.turn(-constants.angleBetweenRays * rayStep);
+                    drawing.line(mapOffsetX + playerX, mapOffsetY + playerY, 
+                                 playerX + deltaX, playerY - deltaY, drawing.colorRgb(200, 200, 0));
+                    
+                    angle.turn(-constants.angleBetweenRays * rayStep);
+                }
             }
         }
     };
@@ -137,7 +144,7 @@ Raycaster.RenderEngine = function()
     var drawWalls = function(vscan, angle)
     {
         // Search for intersections with visible walls
-        var intersections = Raycaster.Raycasting.findWalls(angle);
+        var intersections = raycasting.findWalls(angle);
         
         // Draw walls for each found intersection
         for (var i = 0; i < intersections.length; i++) {
@@ -148,7 +155,8 @@ Raycaster.RenderEngine = function()
             
             // Calculate what to draw for this scanline
             var texture = objects.textures[intersection.resourceIndex],
-                drawParams = calcVSliceDrawParams(vscan, intersection.distance, constants.defaultWallHeight, texture);
+                height = raycasting.getWallHeight(intersection.levelObjectId),
+                drawParams = calcVSliceDrawParams(vscan, intersection.distance, height, texture, 0, true);
             
             if (objects.settings.renderTextures()) {
                 // Draw wall slice with texture
@@ -173,7 +181,7 @@ Raycaster.RenderEngine = function()
     {
         // Search for intersections with visible sprites
         // When multiple sprites are found, they are returned in drawing order (furthest first)
-        var intersections = Raycaster.Raycasting.findSprites(angle);
+        var intersections = raycasting.findSprites(angle);
         
         // Loop through sprites and check for intersections
         for (var i = 0; i < intersections.length; i++) {
@@ -184,7 +192,7 @@ Raycaster.RenderEngine = function()
             
             // Calculate what to draw for this scanline
             var sprite = objects.sprites[intersection.resourceIndex],
-                drawParams = calcVSliceDrawParams(vscan, intersection.distance, sprite.height, sprite, level.sprites[intersection.levelObjectId].yoff);
+                drawParams = calcVSliceDrawParams(vscan, intersection.distance, sprite.height, sprite, level.sprites[intersection.levelObjectId].yoff, false);
                 
             context.drawImage(sprite, 
                               intersection.textureX, drawParams.sy1, 1, drawParams.sy2 - drawParams.sy1,
@@ -199,7 +207,7 @@ Raycaster.RenderEngine = function()
                 if (opacity > 0) {
                     context.globalAlpha = opacity;
                     context.drawImage(objects.sprites[intersection.resourceIndex + 1], 
-                                      intersection.textureX, drawParams.sy1, 1, sprite.height - drawParams.sy2,
+                                      intersection.textureX, drawParams.sy1, 1, drawParams.sy2 - drawParams.sy1,
                                       vscan, drawParams.dy1, 1, drawParams.dy2 - drawParams.dy1);
                     context.globalAlpha = 1;
                 }
@@ -264,11 +272,12 @@ Raycaster.RenderEngine = function()
     //   It also accounts for leaving pixels of the object if it exceeds the size of the viewport
     //
     // Input parameters:
-    // - vscan:         the vertical scanline number
-    // - distance:      distance to object to draw
-    // - objectHeight:  orginal height of the object to draw
-    // - texture:       Image object containing the texture or sprite
-    // - yoff:          Y-offset used for positioning sprites
+    // - vscan:             the vertical scanline number
+    // - distance:          distance to object to draw
+    // - objectHeight:      orginal height of the object to draw
+    // - texture:           Image object containing the texture or sprite
+    // - yoff:              Y-offset used for positioning sprites
+    // - repeatingTexture:  Wether the texture should repeat or be stretched
     //
     // The following parameters are calculated:
     // - dy1:   Starting point of the slice on the destination (the screen) 
@@ -276,30 +285,39 @@ Raycaster.RenderEngine = function()
     // - sy1:   Starting point of the slice on the source (the texture image)
     // - sy2:   End point of the slice on the source
     */
-    var calcVSliceDrawParams = function(vscan, distance, objectHeight, texture, yoff)
+    var calcVSliceDrawParams = function(vscan, distance, objectHeight, texture, yoff, repeatingTexture)
     {
         // Use distance to determine the size of the slice
         var height = Math.floor(objectHeight / distance * constants.distanceToViewport),
             params = new classes.VSliceDrawParams(),
-            destOffsetY = (!yoff) ? 0 : yoff;
             scanlineOffsetY = 0;
         
-        // Determine the scale of the visible slice compared to its original size
-        var scale = height / texture.height;
-        
-        // destOffsetY offsets the drawing position of the vertical slice.
+        // scanlineOffsetY offsets the drawing position of the vertical slice.
         // This is used for sprites that need to be placed at a certain height
-        if (destOffsetY != 0) {
-            scanlineOffsetY = destOffsetY * scale / 2;
+        if (yoff) {
+            // Prepare offset value to be into the horizonOffset calculation
+            scanlineOffsetY = Math.floor(yoff / distance * constants.distanceToViewport);
         }
         
-        // Calculate where to start and end the drawing
-        var scanlineStartY = parseInt(objects.centerOfScreen.y - height / 2) + scanlineOffsetY,
-            scanlineEndY = parseInt(objects.centerOfScreen.y + height / 2) + scanlineOffsetY;
+        // horizonOffset is used for aligning walls and objects correctly on the horizon.
+        // Without this value, everything would always be vertically centered.
+        // The correction for scanlineOffsetY (sprite positioning) is accounted for in this value.
+        var horizonOffset = (height - Math.floor(constants.defaultWallHeight / distance * constants.distanceToViewport)) / 2 - scanlineOffsetY;
+        
+        // Determine where to start and end the scanline on the screen
+        var scanlineEndY = parseInt((objects.centerOfScreen.y - horizonOffset) + height / 2),
+            scanlineStartY = scanlineEndY - height;
+        
+        // TODO: Sprites larger than 64px
         
         // Prevent the coordinates from being off-screen
         params.dy1 = scanlineStartY < 0 ? 0 : scanlineStartY;
         params.dy2 = scanlineEndY > constants.screenHeight ? constants.screenHeight : scanlineEndY;
+        
+        // Determine the scale of the visible slice compared to its original size
+        var scale = height / texture.height;
+        
+
         
         // Calculate where to start copying data from the source image
         var srcStartY = 0,
@@ -307,7 +325,7 @@ Raycaster.RenderEngine = function()
         
         // When sprite is Y-positioned we test wether parts of it are drawn off-screen.
         // In that case we prevent the invisible part from being rendered.
-        if (destOffsetY != 0) {
+        if (horizonOffset != 0) {
             // Check the bottom of the sprite
             if (scanlineEndY > constants.screenHeight) {
                 var remove = (scanlineEndY - constants.screenHeight) / scale;
@@ -327,21 +345,21 @@ Raycaster.RenderEngine = function()
         if (height > constants.screenHeight) {
             var excessPixels = (height - constants.screenHeight) / 2;    
             
-            if (destOffsetY == 0) {
+            if (horizonOffset == 0) {
                 srcStartY = excessPixels / scale
                 if (srcStartY >= srcEndY / 2) {
                     srcStartY = srcEndY / 2 - 1;
                 }
                 srcEndY -= srcStartY;
             }
-            else if (destOffsetY > 0) {
+            else if (horizonOffset > 0) {
                 // Handle clipping of the bottom of the sprite
                 srcStartY -= excessPixels / scale / 2;
                 if (srcStartY < 0) {
                     srcStartY = 0;
                 }
             }
-            else if (destOffsetY < 0) {
+            else if (horizonOffset < 0) {
                 // Handle clipping of the top of the sprite
                 srcStartY += excessPixels / scale / 2;
             }
@@ -367,7 +385,8 @@ Raycaster.RenderEngine = function()
         if (objects.redrawScreen) {
             drawWorld();
             drawMiniMap();
-            //drawDebugInfo();
+            drawDebugInfo();
+            
             objects.redrawScreen = false;
         }
     }

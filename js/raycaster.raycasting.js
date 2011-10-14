@@ -208,9 +208,18 @@ Raycaster.Raycasting = function()
         return intersections;
     };
     
+    // Walls have a start and end height
+    // This method calculates the height of a wall at a specific intersection
+    var getWallHeight = function(wallId, intersection)
+    {
+        return Raycaster.Objects.Level.walls[wallId].h1;
+    }
+    
+    
     // Expose public members
     return {
         findWalls : findWalls,
-        findSprites: findSprites
+        findSprites: findSprites,
+        getWallHeight: getWallHeight
     };
 }();

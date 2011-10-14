@@ -8,8 +8,8 @@ Raycaster.Objects =
     player: 
     {
         x: 85,
-        y: 70,
-        angle: new Raycaster.Classes.Angle(335)
+        y: 370,
+        angle: new Raycaster.Classes.Angle(50)
     },
     
     // Settings checkboxes states

@@ -16,26 +16,26 @@ The old (orthogonal walls) version is available from the v0.3 branch.
 Feel free to use it for whatever you need it for.
 
 Revision log:
-(0.2)   Initial release.
-        Uses "wolfenstein" technique to render the world.
-        Has a grid-bases level and supports only orthogonal walls.
-(0.3)   Redraw only when player has moved or settings have changed.
-        Removed jQuery dependency (thanks to James Abley, https://github.com/jabley)
-(0.4)   Added quality setting which makes raycasting use lesser rays.
-        Attempted to implement non-orthogonal walls, but it was a failed attempt
-(0.5)   Raycasting engine is rewritten and now supports non-orthogonal walls.
-        Strafing implemented.
-        Quality settings removed because it needs fixing.
-(0.5.1) Added FPS counter
-(0.5.2) Experimented with floor casting, but it costs too much performance.
-        For that reason a gradient is used as floor.
-        Added sky background
-(0.6)   Refactored the code so that it could be stored in seperate files and added more comments
-        Implemented sprite rendering
+(0.2)   - Initial release.
+          Uses "wolfenstein" technique to render the world.
+          Has a grid-bases level and supports only orthogonal walls.
+(0.3)   - Redraw only when player has moved or settings have changed.
+        - Removed jQuery dependency (thanks to James Abley, https://github.com/jabley)
+(0.4)   - Attempted to implement non-orthogonal walls, but it was a failed attempt
+          Never released this version
+(0.5)   - Raycasting engine is rewritten and now supports non-orthogonal walls.
+        - Strafing implemented.
+(0.5.1) - Added FPS counter
+(0.5.2) - Experimented with floor casting, but it costs too much performance.
+          For that reason a gradient is used as floor.
+        - Added sky background
+(0.6)   - Refactored the code so that it could be stored in seperate files and added more comments
+        - Implemented sprite rendering
 (0.7)   - Tried to optimize performance by implementing sin/cos/tan lookup tables.
           However, there are so many required values that it slowed things down in the end.
         - Fixed bug that caused incorrect rendering of walls that are very close to the player
-        - Sprites can now be vertically positioned
+        - Sprites rendering optimized and now supports vertically positioning of sprites
+        - Variable wall height implemented
 
 Planned features:
 - Sectors
