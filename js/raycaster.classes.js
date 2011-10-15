@@ -66,6 +66,7 @@ Raycaster.Classes =
     Angle: function(degrees) {        
         var self = this;
         this.degrees = degrees;
+        this.radians = 0;
         
         // Set the value of this angle
         // Corrects negative values or values greater than 360 degrees
@@ -78,6 +79,8 @@ Raycaster.Classes =
             if (self.degrees < 0) {
                 self.degrees += 359;
             }
+            
+            self.radians = self.toRadians();
         };
         
         // Converts the angle from degrees to radians

@@ -78,8 +78,8 @@ Raycaster.RenderEngine = function()
                 
                 if (intersections.length > 0) {
                     var intersection = intersections[intersections.length - 1],
-                        deltaX = Math.floor(Math.cos(angle.toRadians()) * (Math.abs(intersection.distance) / shrinkFactor)),
-                        deltaY = Math.floor(Math.sin(angle.toRadians()) * (Math.abs(intersection.distance) / shrinkFactor));
+                        deltaX = Math.floor(Math.cos(angle.radians) * (Math.abs(intersection.distance) / shrinkFactor)),
+                        deltaY = Math.floor(Math.sin(angle.radians) * (Math.abs(intersection.distance) / shrinkFactor));
                 
                     drawing.line(mapOffsetX + playerX, mapOffsetY + playerY, 
                                  playerX + deltaX, playerY - deltaY, drawing.colorRgb(200, 200, 0));
@@ -118,10 +118,9 @@ Raycaster.RenderEngine = function()
     }
     
     // Draws the gradient for the floor
-    // Floor casting is too slow at this point, thats why i used a gradient
-    var drawFloor = function()
+    var drawFloorGradient = function()
     {
-        if (objects.settings.renderFloor()) {
+        //if (!objects.settings.renderFloor()) {
             var context = Raycaster.Objects.context,
                 gradient = context.createLinearGradient(0, constants.screenHeight / 2, 0, constants.screenHeight);
             
@@ -132,9 +131,41 @@ Raycaster.RenderEngine = function()
             
             context.fillStyle = gradient;
             context.fillRect(0, constants.screenHeight / 2, constants.screenWidth, constants.screenHeight / 2);
-        }
+        //}
     }
     
+    // Perform floor casting for scanline
+    // Floor casting is too slow at this point..
+    // The calculations alone lose us a lot of FPS, not even to speak about drawing the pixels...
+    // (thats why there is drawFloorGradient() to use as alternative)
+    var drawFloor = function(vscan, startY, intersection)
+    {
+        var step = 1;
+        
+        // Formula from: http://lodev.org/cgtutor/raycasting2.html
+        if (objects.settings.renderFloor() && vscan % step == 0) {
+            
+            var floorTexture = objects.textures[level.floorTextureId];
+            
+            for (var y = startY; y < constants.screenHeight; y += step) {
+                var curdist = constants.screenHeight / (2 * y - constants.screenHeight);
+            
+                var weight = curdist / intersection.distance,
+                    floorX = weight * intersection.x + (1 - weight) * objects.player.x,
+                    floorY = weight * intersection.y + (1 - weight) * objects.player.y,
+                    textureX = parseInt(floorX * floorTexture.width) % floorTexture.width,
+                    textureY = parseInt(floorY * floorTexture.height) % floorTexture.height;
+                    
+                context.drawImage(floorTexture, 
+                                  textureX, textureY, 1, 1,
+                                  vscan, y, step, step);
+                
+                //if (objects.settings.renderLighting() && curdist > 100) {
+                //    drawing.lineSquare(vscan, y, vscan + 1, y + 1, drawing.colorRgba(0, 0, 0, calcDistanceOpacity(curdist)))
+                //}
+            }
+        }
+    };
     
     /****************** / Core rendering methods (walls, sprites) / *****************/
     
@@ -173,6 +204,9 @@ Raycaster.RenderEngine = function()
             if (objects.settings.renderLighting() && intersection.distance > 100) {
                 drawing.lineSquare(vscan, drawParams.dy1, 1, drawParams.dy2, drawing.colorRgba(0, 0, 0, calcDistanceOpacity(intersection.distance)))
             }
+            
+            // Floor casting (still way too slow)
+            drawFloor(vscan, drawParams.dy2, intersection);
         }
     }
     
@@ -223,9 +257,9 @@ Raycaster.RenderEngine = function()
         drawing.square(0, 0, constants.screenWidth, constants.screenHeight / 2, drawing.colorRgb(60, 60, 60));
         drawing.square(0, constants.screenHeight / 2, constants.screenWidth, constants.screenHeight / 2, drawing.colorRgb(120, 120, 120));
         
-        // Draw sky and floor
+        // Draw sky and floor (floorcasting is disabled)
         drawSky();
-        drawFloor();
+        drawFloorGradient();
         
         var angle = new classes.Angle(objects.player.angle.degrees + constants.fieldOfView / 2);
         
@@ -252,7 +286,7 @@ Raycaster.RenderEngine = function()
         var distortRemove = new classes.Angle(constants.fieldOfView / 2);
         distortRemove.turn(-constants.angleBetweenRays * vscan);
         
-        return distance * Math.cos(distortRemove.toRadians());
+        return distance * Math.cos(distortRemove.radians);
     };
     
     // Calculates the opacity for the black overlay image that is used to make objects in the distance appear darker

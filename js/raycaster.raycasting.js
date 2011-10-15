@@ -32,8 +32,8 @@ Raycaster.Raycasting = function()
         // Ray line
         var px1 = player.x,
             py1 = player.y,
-            px2 = player.x + Math.cos(angle.toRadians()),
-            py2 = player.y - Math.sin(angle.toRadians());
+            px2 = player.x + Math.cos(angle.radians),
+            py2 = player.y - Math.sin(angle.radians);
         
         // Some number we need to solve our equation
         var f1 = ((line.x2 - line.x1) * (py1 - line.y1) - (line.y2 - line.y1) * (px1 - line.x1)) /
@@ -88,10 +88,10 @@ Raycaster.Raycasting = function()
             deltaY = player.y - i.y;
         
         if (Math.abs(deltaX) > Math.abs(deltaY)) {
-            i.distance = Math.abs(deltaX / Math.cos(angle.toRadians()));
+            i.distance = Math.abs(deltaX / Math.cos(angle.radians));
         }
         else {
-            i.distance = Math.abs(deltaY / Math.sin(angle.toRadians()));
+            i.distance = Math.abs(deltaY / Math.sin(angle.radians));
         }
         
         return i;

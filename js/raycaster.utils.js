@@ -8,8 +8,8 @@ Raycaster.Utils =
     getDeltaXY: function(angle, distance) 
     {
         return new Raycaster.Classes.Point(
-            Math.cos(angle.toRadians()) * distance,
-            Math.sin(angle.toRadians()) * distance
+            Math.cos(angle.radians) * distance,
+            Math.sin(angle.radians) * distance
         );
     }
 };

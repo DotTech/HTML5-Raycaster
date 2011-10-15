@@ -64,6 +64,9 @@ Raycaster.Objects =
     */
     loadResources: function() 
     {
+        //need this when creating images in a different canvas
+        //netscape.security.PrivilegeManager.enablePrivilege("UniversalBrowserRead");
+        
         // Load texture images
         Raycaster.Objects.textures = new Array();
         for (var i = 0; i < Raycaster.Constants.texturesFiles.length; i++) {
