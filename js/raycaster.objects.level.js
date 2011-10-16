@@ -3,14 +3,14 @@ Raycaster.Objects.Level =
 {
     walls: [
         // Walls surrounding the level
-        new Raycaster.Classes.Wall(100, 10, 700, 10, 192, 192, 1),
-        new Raycaster.Classes.Wall(10, 100, 10, 700, 192, 192, 1),
-        new Raycaster.Classes.Wall(10, 100, 100, 10, 192, 192, 1),
-        new Raycaster.Classes.Wall(790, 100, 790, 700, 192, 192, 1),
-        new Raycaster.Classes.Wall(700, 10, 790, 100, 192, 192, 1),
-        new Raycaster.Classes.Wall(100, 790, 700, 790, 192, 192, 1),
-        new Raycaster.Classes.Wall(790, 700, 700, 790, 192, 192, 1),
-        new Raycaster.Classes.Wall(10, 700, 100, 790, 192, 192, 1),
+        new Raycaster.Classes.Wall(100, 10, 700, 10, 200, 200, 1),
+        new Raycaster.Classes.Wall(10, 100, 10, 700, 200, 200, 1),
+        new Raycaster.Classes.Wall(10, 100, 100, 10, 200, 200, 1),
+        new Raycaster.Classes.Wall(790, 100, 790, 700, 200, 200, 1),
+        new Raycaster.Classes.Wall(700, 10, 790, 100, 200, 200, 1),
+        new Raycaster.Classes.Wall(100, 790, 700, 790, 200, 200, 1),
+        new Raycaster.Classes.Wall(790, 700, 700, 790, 200, 200, 1),
+        new Raycaster.Classes.Wall(10, 700, 100, 790, 200, 200, 1),
         
         // Walls in the middle
         new Raycaster.Classes.Wall(340, 300, 380, 320, 64, 64, 0),
@@ -32,13 +32,13 @@ Raycaster.Objects.Level =
         new Raycaster.Classes.Wall(410, 84, 470, 10, 128, 128, 1),
         
         // Angled wall height
-        new Raycaster.Classes.Wall(80, 10, 120, 60, 32, 32, 3),
-        new Raycaster.Classes.Wall(120, 60, 140, 80, 32, 64, 3),
-        new Raycaster.Classes.Wall(140, 80, 160, 90, 64, 75, 3),
-        new Raycaster.Classes.Wall(160, 90, 170, 90, 75, 75, 3),
-        new Raycaster.Classes.Wall(170, 90, 190, 80, 75, 64, 3),
-        new Raycaster.Classes.Wall(190, 80, 210, 60, 64, 32, 3),
-        new Raycaster.Classes.Wall(210, 60, 250, 10, 32, 32, 3),
+        new Raycaster.Classes.Wall(80, 10, 120, 60, 32, 32, 0),
+        new Raycaster.Classes.Wall(120, 60, 140, 80, 32, 64, 0),
+        new Raycaster.Classes.Wall(140, 80, 160, 90, 64, 75, 0),
+        new Raycaster.Classes.Wall(160, 90, 170, 90, 75, 75, 0),
+        new Raycaster.Classes.Wall(170, 90, 190, 80, 75, 64, 0),
+        new Raycaster.Classes.Wall(190, 80, 210, 60, 64, 32, 0),
+        new Raycaster.Classes.Wall(210, 60, 250, 10, 32, 32, 0),
     ],
     
     sprites: [

@@ -31,7 +31,7 @@ Raycaster.Classes =
     // Class:       Raycaster.Classes.Wall
     // Description: Parameters that define a wall in the game world
     */
-    Wall: function(x1, y1, x2, y2, h1, h2, textureId) {
+    Wall: function(x1, y1, x2, y2, h1, h2, textureId, noStretch) {
         this.x1 = x1;   // x1, y1: wall start point
         this.y1 = y1;
         this.x2 = x2;   // x2, y2: wall end point
@@ -39,22 +39,28 @@ Raycaster.Classes =
         this.h1 = h1;   // wall height at start
         this.h2 = h2;   // wall height at end
         this.textureId = textureId; // id (index in Constants.texturesFiles array) of texture to use on this wall
+        this.maxHeight = h1 > h2 ? h1 : h2;
+        this.noStretch = noStretch; // prevent texture from being stretched in height if it doesnt fit the wall
     },
     
-    VSliceDrawParams: function(dy1, dy2, sy1, sy2) {
-        this.dy1 = dy1;
-        this.dy2 = dy2;
-        this.sy1 = sy1;
-        this.sy2 = sy2;
+    VSliceDrawParams: function() {
+        return {
+            dy1: 0,
+            dy2: 0,
+            sy1: 0,
+            sy2: 0
+        };
     },
     
     Intersection: function() {
-        this.x = 0;             // X coordinate of this intersection
-        this.y = 0;             // Y coordinate of this intersection
-        this.distance = 0;      // Distance to the intersection
-        this.resourceId = 0;    // index of texture or sprite image in Objects namespace
-        this.levelObjectId = 0; // index of texture or sprite in Objects.Level namespace
-        this.textureX = 0;      // X coordinate of the texture scanline to draw
+        return {
+            x: 0,               // X coordinate of this intersection
+            y: 0,               // Y coordinate of this intersection
+            distance: 0,        // Distance to the intersection
+            resourceId: 0,      // index of texture or sprite image in Objects namespace
+            levelObjectId: 0,   // index of texture or sprite in Objects.Level namespace
+            textureX: 0         // X coordinate of the texture scanline to draw
+        };
     },
     
     KeyButton: function(code) {
@@ -62,7 +68,6 @@ Raycaster.Classes =
         this.pressed = false;
     },
     
-    // Represents an angle and implements some methods to manipulate the angle
     Angle: function(degrees) {        
         var self = this;
         this.degrees = degrees;
@@ -73,11 +78,11 @@ Raycaster.Classes =
         this.setValue = function(v) {
             self.degrees = parseFloat(v);
             
-            if (self.degrees > 359) {
-                self.degrees -= 359;
+            if (self.degrees >= 360) {
+                self.degrees -= 360;
             }
             if (self.degrees < 0) {
-                self.degrees += 359;
+                self.degrees += 360;
             }
             
             self.radians = self.toRadians();
@@ -101,16 +106,18 @@ Raycaster.Classes =
 
         // Determine to which quadrant of a circle the angle is facing
         this.getQuadrant = function() {
-            if (self.degrees >= 0 && self.degrees < 90) {
+            var rounded = ~~ (0.5 + self.degrees);
+            
+            if ((rounded >= 0 || rounded == 360) && rounded < 90) {
                 return 1;
             }
-            if (self.degrees >= 90 && self.degrees < 180) {
+            if (rounded >= 90 && rounded < 180) {
                 return 2;
             }
-            if (self.degrees >= 180 && self.degrees < 270) {
+            if (rounded >= 180 && rounded < 270) {
                 return 3;
             }
-            if (self.degrees >= 270 && self.degrees < 360) {
+            if (rounded >= 270 && rounded < 360) {
                 return 4;
             }
         };

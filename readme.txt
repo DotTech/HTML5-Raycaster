@@ -1,8 +1,8 @@
 HTML5 Raycaster Demo
 
 Author:     Ruud van Falier (ruud@dottech.nl)
-Version:    0.7
-Released:   14 october 2011
+Version:    0.7.1
+Released:   -
 
 Demo:       http://www.dottech.nl/raycaster/
 Git:        https://github.com/Stribe/HTML5-Raycaster
@@ -15,6 +15,15 @@ to improve on this after planned analysis and implemention of sectors.
 The old (orthogonal walls) version is available from the v0.3 branch.
 
 Feel free to use it for whatever you need it for.
+
+Planned features:
+- Repeating textures (instead of being stretched)
+- Sectors
+
+Optimizations/fixes planned:
+- When drawing a wall slice, remember intersection and use it during sprite rendering to avoid having to search for blocking walls
+- Overall performance analysis is required to find bottlenecks
+- Sprites are not visible behind walls with lower height than the sprite
 
 Revision log:
 (0.2)   - Initial release.
@@ -36,13 +45,12 @@ Revision log:
         - Sprites rendering optimized and now supports vertically positioning of sprites
         - Variable wall height implemented
           Also support angled height (a different start and end height)
+(0.8)   - Tried several techniques for speeding up drawing, but couldn't find anything faster.
+          Also turns out that the big performance eater is not drawing, but calculating.
+        - Implemented a few performance tweaks:
+          * VSliceDrawParams and Intersection are now returning objects and dont need to be instantiated
+          * Math.round() replaced for bitwise hack
+        - Fixed bug in Raycasting.correctQuadrant() which returned incorrect result at straight angles
+        - Fixed texturing bug at 0 degrees (turns out i should not ignore angle=360 degrees, doh)
+        - Experimental floorcasting implemented, its way too slow though
 
-Planned features:
-- Repeating textures (instead of being stretched)
-- Sectors
-
-Optimizations/fixes planned:
-- When drawing a wall slice, remember intersection and use it during sprite rendering to avoid having to search for blocking walls
-- There is a drawing bug around angle 0 and i have yet to figure out the cause
-- Overall performance analysis is required to find bottlenecks
-- Sprites are not visible behind walls with lower height than the sprite

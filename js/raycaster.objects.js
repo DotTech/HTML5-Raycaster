@@ -7,9 +7,10 @@ Raycaster.Objects =
     // Defines player parameters
     player: 
     {
-        x: 45,
-        y: 395,
-        angle: new Raycaster.Classes.Angle(50)
+        x: Raycaster.Constants.playerStartPos.x,
+        y: Raycaster.Constants.playerStartPos.y,
+        z: Raycaster.Constants.playerStartPos.z,
+        angle: new Raycaster.Classes.Angle(Raycaster.Constants.playerStartAngle)
     },
     
     // Settings checkboxes states
@@ -44,7 +45,10 @@ Raycaster.Objects =
         lessThan: new Raycaster.Classes.KeyButton(188),
         greaterThan: new Raycaster.Classes.KeyButton(190),
         esc: new Raycaster.Classes.KeyButton(27),
-        shift: new Raycaster.Classes.KeyButton(16)
+        shift: new Raycaster.Classes.KeyButton(16),
+        charR: new Raycaster.Classes.KeyButton(82),
+        charA: new Raycaster.Classes.KeyButton(65),
+        charZ: new Raycaster.Classes.KeyButton(90),
     },
     
     centerOfScreen: new Raycaster.Classes.Point(Raycaster.Constants.screenWidth / 2, Raycaster.Constants.screenHeight / 2),

@@ -88,6 +88,7 @@ Raycaster.Movement = function()
     // Update movement
     var update = function()
     {
+        // Turn or strafe left
         if (Raycaster.Objects.keys.arrowLeft.pressed) {
             if (Raycaster.Objects.keys.shift.pressed) {
                 strafe(true);
@@ -97,6 +98,7 @@ Raycaster.Movement = function()
             }
         }
         
+        // Turn or strafe right
         if (Raycaster.Objects.keys.arrowRight.pressed) {
             if (Raycaster.Objects.keys.shift.pressed) {
                 strafe(false);
@@ -106,23 +108,38 @@ Raycaster.Movement = function()
             }
         }
         
+        // Walk forward
         if (Raycaster.Objects.keys.arrowUp.pressed) {
             walk(true);
         }
         
+        // Walk backward
         if (Raycaster.Objects.keys.arrowDown.pressed) {
             walk(false);
         }
         
+        // Strafe left
         if (Raycaster.Objects.keys.lessThan.pressed) {
             strafe(true);
         }
+        // Strafe right
         else if (Raycaster.Objects.keys.greaterThan.pressed) {
             strafe(false);
         }
         
+        // Stop gameloop interval
         if (Raycaster.Objects.keys.esc.pressed) {
             clearInterval(Raycaster.Objects.gameloopInterval);
+        }
+        
+        // Reverse player angle
+        if (Raycaster.Objects.keys.charR.pressed) {
+            Raycaster.Objects.player.angle.setValue(Raycaster.Objects.player.angle.degrees - 180);
+            Raycaster.Objects.keys.charR.pressed = false;
+            Raycaster.engine.redraw();
+        }
+        
+        if (Raycaster.Objects.keys.charA.pressed) {
         }
     }
     

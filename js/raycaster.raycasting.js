@@ -17,6 +17,20 @@ Raycaster.Raycasting = function()
             deltaY = player.y - intersection.y,
             quadrant = 0;
         
+        var roundedAngle = ~~ (0.5 + angle.degrees);
+        if (roundedAngle == 0 || roundedAngle == 360) {
+            return deltaX < 0;
+        }
+        else if (roundedAngle == 90) {
+            return deltaY > 0;
+        }
+        else if (roundedAngle == 180) {
+            return deltaX > 0;
+        }
+        else if (roundedAngle == 270) {
+            return deltaY < 0;
+        }
+        
         if (deltaX < 0 && deltaY >= 0) quadrant = 1;
         if (deltaX >= 0 && deltaY > 0) quadrant = 2;
         if (deltaX > 0 && deltaY <= 0) quadrant = 3;
@@ -32,49 +46,42 @@ Raycaster.Raycasting = function()
         // Ray line
         var px1 = player.x,
             py1 = player.y,
-            px2 = player.x + Math.cos(angle.radians),
-            py2 = player.y - Math.sin(angle.radians);
+            px2 = px1 + Math.cos(angle.radians),
+            py2 = py1 - Math.sin(angle.radians);
         
         // Some number we need to solve our equation
         var f1 = ((line.x2 - line.x1) * (py1 - line.y1) - (line.y2 - line.y1) * (px1 - line.x1)) /
                  ((line.y2 - line.y1) * (px2 - px1) - (line.x2 - line.x1) * (py2 - py1));
         
         // Calculate where the ray intersects with the line
-        var i = new Raycaster.Classes.Intersection();
+        var i = Raycaster.Classes.Intersection();
             i.x = px1 + f1 * (px2 - px1),
-            i.y = py1 + f1 * (py2 - py1),
-            roundX = Math.round(i.x),
-            roundY = Math.round(i.y);
+            i.y = py1 + f1 * (py2 - py1);
         
         // Check if intersection is located on the line
-        // Use rounded coordinates here!
-        var hit = true;
-            linex1 = Math.round(line.x1),
-            linex2 = Math.round(line.x2),
-            liney1 = Math.round(line.y1),
-            liney2 = Math.round(line.y2);
-        
-        // When looking for walls we want to round the coordinates before comparing them
+        var hit = true,
+            intersX = i.x,
+            intersY = i.y,
+            linex1 = line.x1,
+            linex2 = line.x2,
+            liney1 = line.y1,
+            liney2 = line.y2;
+                
+        // When looking for walls we want to round the intersection coordinates before comparing them
+        // When looking for sprites we dont want those coords rounded, otherwise the result is not exact enough
         if (!dontRoundCoords) {
-            hit = (linex1 >= linex2) 
-                ? roundX <= linex1 && roundX >= linex2
-                : roundX >= linex1 && roundX <= linex2;
-            if (hit) {
-                hit = (liney1 >= liney2)
-                    ? roundY <= liney1 && roundY >= liney2
-                    : roundY >= liney1 && roundY <= liney2;
-            }
+            // Round the numbers using bitwise rounding hack
+            intersX = ~~ (0.5 + i.x);
+            intersY = ~~ (0.5 + i.y);
         }
-        // When looking for sprites we dont want the coords rounded, otherwise the result is not exact enough
-        else {
-            hit = (line.x1 >= line.x2) 
-                ? i.x <= line.x1 && i.x >= line.x2
-                : i.x >= line.x1 && i.x <= line.x2;
-            if (hit) {
-                hit = (line.y1 >= line.y2)
-                    ? i.y <= line.y1 && i.y >= line.y2
-                    : i.y >= line.y1 && i.y <= line.y2;
-            }
+        
+        hit = (linex1 >= linex2) 
+            ? intersX <= linex1 && intersX >= linex2
+            : intersX >= linex1 && intersX <= linex2;
+        if (hit) {
+            hit = (liney1 >= liney2)
+                ? intersY <= liney1 && intersY >= liney2
+                : intersY >= liney1 && intersY <= liney2;
         }
         
         // The formula will also return the intersections that are behind the player
@@ -147,21 +154,27 @@ Raycaster.Raycasting = function()
         var intersection = getIntersection(level.walls[wallId], angle);
         
         if (intersection) {
-            // Texture mapping
-            // Determine which scanline of the texture to draw for this intersection
-            var wall = level.walls[wallId],
-                length = Math.sqrt(Math.pow(Math.abs(wall.x1 - wall.x2), 2) + Math.pow(Math.abs(wall.y1 - wall.y2), 2)),
-                lengthToIntersection = Math.sqrt(Math.pow(Math.abs(wall.x1 - intersection.x), 2) + Math.pow(Math.abs(wall.y1 - intersection.y), 2));
-
-            intersection.resourceIndex = level.walls[wallId].textureId;
             intersection.levelObjectId = wallId;
             
-            var textureWidth = Raycaster.Objects.textures[intersection.resourceIndex].width;
-            if (textureWidth > length) {
-                lengthToIntersection *= textureWidth / length;
+            // Texture mapping routine
+            // Determine which scanline of the texture to draw for this intersection
+            if (Raycaster.Objects.settings.renderTextures()) {
+                var wall = level.walls[wallId],
+                    length = Math.sqrt(Math.pow(Math.abs(wall.x1 - wall.x2), 2) + Math.pow(Math.abs(wall.y1 - wall.y2), 2)),
+                    lengthToIntersection = Math.sqrt(Math.pow(Math.abs(wall.x1 - intersection.x), 2) + Math.pow(Math.abs(wall.y1 - intersection.y), 2));
+
+                intersection.resourceIndex = level.walls[wallId].textureId;
+                
+                var textureWidth = Raycaster.Objects.textures[intersection.resourceIndex].width,
+                    textureHeight = Raycaster.Objects.textures[intersection.resourceIndex].height;
+                
+                // Wall textures are stretched in height and repeated over the width
+                if (wall.maxHeight != textureHeight) {
+                    lengthToIntersection *= textureHeight / wall.maxHeight;
+                }
+                
+                intersection.textureX = parseInt(lengthToIntersection % Raycaster.Objects.textures[intersection.resourceIndex].width);
             }
-            
-            intersection.textureX = parseInt(lengthToIntersection % Raycaster.Objects.textures[intersection.resourceIndex].width);
         }
         
         return intersection;

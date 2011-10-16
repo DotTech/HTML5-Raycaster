@@ -187,7 +187,8 @@ Raycaster.RenderEngine = function()
             // Calculate what to draw for this scanline
             var texture = objects.textures[intersection.resourceIndex],
                 height = raycasting.getWallHeight(intersection),
-                drawParams = calcVSliceDrawParams(vscan, intersection.distance, height, texture, 0, true);
+                wall = level.walls[intersection.levelObjectId]
+                drawParams = calcVSliceDrawParams(vscan, intersection.distance, height, texture, 0, wall.maxHeight);
             
             if (objects.settings.renderTextures()) {
                 // Draw wall slice with texture
@@ -201,7 +202,7 @@ Raycaster.RenderEngine = function()
             }
             
             // Make walls in the distance appear darker
-            if (objects.settings.renderLighting() && intersection.distance > 100) {
+            if (objects.settings.renderLighting() && intersection.distance > constants.startFadingAt) {
                 drawing.lineSquare(vscan, drawParams.dy1, 1, drawParams.dy2, drawing.colorRgba(0, 0, 0, calcDistanceOpacity(intersection.distance)))
             }
             
@@ -226,14 +227,14 @@ Raycaster.RenderEngine = function()
             
             // Calculate what to draw for this scanline
             var sprite = objects.sprites[intersection.resourceIndex],
-                drawParams = calcVSliceDrawParams(vscan, intersection.distance, sprite.height, sprite, level.sprites[intersection.levelObjectId].yoff, false);
+                drawParams = calcVSliceDrawParams(vscan, intersection.distance, sprite.height, sprite, level.sprites[intersection.levelObjectId].yoff, sprite.height);
                 
             context.drawImage(sprite, 
                               intersection.textureX, drawParams.sy1, 1, drawParams.sy2 - drawParams.sy1,
                               vscan, drawParams.dy1, 1, drawParams.dy2 - drawParams.dy1);
 
             // Make sprites in the distance appear darker
-            if (objects.settings.renderLighting() && intersection.distance > 100) {
+            if (objects.settings.renderLighting() && intersection.distance > constants.startFadingAt) {
                 var opacity = calcDistanceOpacity(intersection.distance);
                 
                 // There is a black image mask of every sprite located in the sprites array, one index after the original sprite.
@@ -292,7 +293,7 @@ Raycaster.RenderEngine = function()
     // Calculates the opacity for the black overlay image that is used to make objects in the distance appear darker
     var calcDistanceOpacity = function(distance) 
     {
-        var colorDivider = parseFloat(distance / 200); 
+        var colorDivider = parseFloat(distance / (constants.startFadingAt * 1.5)); 
         colorDivider = (colorDivider > 5) ? 5 : colorDivider;
         
         return parseFloat(1 - 1 / colorDivider);
@@ -311,7 +312,8 @@ Raycaster.RenderEngine = function()
     // - objectHeight:      orginal height of the object to draw
     // - texture:           Image object containing the texture or sprite
     // - yoff:              Y-offset used for positioning sprites
-    // - repeatingTexture:  Wether the texture should repeat or be stretched
+    // - objectMaxHeight:   When a wall has angled height (different start/end height),
+    //                      we need to know the maximum height so the textures dont stretch in height
     //
     // The following parameters are calculated:
     // - dy1:   Starting point of the slice on the destination (the screen) 
@@ -319,11 +321,11 @@ Raycaster.RenderEngine = function()
     // - sy1:   Starting point of the slice on the source (the texture image)
     // - sy2:   End point of the slice on the source
     */
-    var calcVSliceDrawParams = function(vscan, distance, objectHeight, texture, yoff, repeatingTexture)
+    var calcVSliceDrawParams = function(vscan, distance, objectHeight, texture, yoff, objectMaxHeight)
     {
         // Use distance to determine the size of the slice
         var height = Math.floor(objectHeight / distance * constants.distanceToViewport),
-            params = new classes.VSliceDrawParams(),
+            params = classes.VSliceDrawParams(),
             scanlineOffsetY = 0;
         
         // scanlineOffsetY offsets the drawing position of the vertical slice.
@@ -336,7 +338,7 @@ Raycaster.RenderEngine = function()
         // horizonOffset is used for aligning walls and objects correctly on the horizon.
         // Without this value, everything would always be vertically centered.
         // The correction for scanlineOffsetY (sprite positioning) is accounted for in this value.
-        var horizonOffset = (height - Math.floor(constants.defaultWallHeight / distance * constants.distanceToViewport)) / 2 - scanlineOffsetY;
+        var horizonOffset = (height - Math.floor(constants.horizonOffset * 2 / distance * constants.distanceToViewport)) / 2 - scanlineOffsetY;
         
         // Determine where to start and end the scanline on the screen
         var scanlineEndY = parseInt((objects.centerOfScreen.y - horizonOffset) + height / 2),
@@ -346,31 +348,42 @@ Raycaster.RenderEngine = function()
         params.dy1 = scanlineStartY < 0 ? 0 : scanlineStartY;
         params.dy2 = scanlineEndY > constants.screenHeight ? constants.screenHeight : scanlineEndY;
         
-        // Determine the scale of the visible slice compared to its original size
-        var scale = height / texture.height;
-        
         // Now that we've determined the size and location of the scanline,
         // we calculate which part of the texture image we need to render onto the scanline
         // When part of the object is located outside of the screen we dont need to copy that part of the texture image.
-        var srcStartY = 0,
-            srcEndY = texture.height;
-        
-        // Compensate for bottom part being offscreen
-        if (scanlineEndY > constants.screenHeight) {
-            var remove = (scanlineEndY - constants.screenHeight) / scale;
-            srcEndY -= remove;
+        if (objects.settings.renderTextures()) {
+            var scale = height / texture.height,// Height ratio of the object compared to its original size
+                srcStartY = 0,                  // Start Y coord of source image data
+                srcEndY = texture.height;       // End y coord of source image data
+            
+            // Compensate for bottom part being offscreen
+            if (scanlineEndY > constants.screenHeight) {
+                var remove = (scanlineEndY - constants.screenHeight) / scale;
+                srcEndY -= remove;
+            }
+            
+            // Compensate for top part being offscreen
+            if (scanlineStartY < 0) {
+                var remove = Math.abs(scanlineStartY) / scale;
+                srcStartY += remove;
+            }
+            
+            // Prevent the texture from appearing skewed when wall height is angled
+            if (objectMaxHeight > objectHeight) {
+                var maxHeight = Math.floor(objectMaxHeight / distance * constants.distanceToViewport),
+                    diff = Math.abs(maxHeight - height),
+                    scale = maxHeight / texture.height;
+                    
+                srcStartY += Math.floor(diff / scale);
+            }
+            
+            params.sy1 = srcStartY;
+            params.sy2 = srcEndY;
+            
+            return params.sy2 > params.sy1 ? params : false;
         }
         
-        // Compensate for top part being offscreen
-        if (scanlineStartY < 0) {
-            var remove = Math.abs(scanlineStartY) / scale;
-            srcStartY += remove;
-        }
-        
-        params.sy1 = srcStartY;
-        params.sy2 = srcEndY;
-        
-        return params.sy2 > params.sy1 ? params : false;
+        return params;
     }
     
     

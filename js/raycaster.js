@@ -48,6 +48,12 @@ var Raycaster = function()
     // Initialization method of the Raycaster application
     var start = function(canvasId) 
     {
+        // Hide introduction text and show debug info if running local
+        if (Raycaster.Constants.runningLocal) {
+            document.getElementById("introduction").style.display = "none";
+            Raycaster.Constants.displayDebugInfo = true;
+        }
+        
         // Setup the canvas
         var canvas = document.getElementById(canvasId);
         Raycaster.Objects.context = canvas.getContext("2d");
