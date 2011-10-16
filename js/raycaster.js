@@ -2,7 +2,7 @@
     HTML5 Raycaster Demo
     
     Author:     Ruud van Falier (ruud@dottech.nl)
-    Version:    0.8
+    Version:    0.9
     Released:   16 october 2011
     
     Demo:       http://www.dottech.nl/raycaster/
@@ -59,10 +59,12 @@ var Raycaster = function()
         Raycaster.Objects.context = canvas.getContext("2d");
         
         // Call level init (to allow runtime modifications to level)
-        if (document.getElementById("ddlLevel") && document.getElementById("ddlLevel").selectedIndex > 0) {
-            var index = document.getElementById("ddlLevel").selectedIndex,
-                value = document.getElementById("ddlLevel").options[index].value;
-            Raycaster.Objects.Level = demoLevels[value];
+        if (location.hash) {
+            var index = parseInt(location.hash.split("#")[1]);
+            if (index) {
+                Raycaster.Objects.Level = demoLevels[index];
+                document.getElementById("ddlLevel").selectedIndex = index;
+            }
         }
         Raycaster.Objects.Level.init();
         

@@ -118,4 +118,45 @@ demoLevels[1] =
     }
 };
 
+demoLevels[2] =
+{
+    walls: [
+        // Walls surrounding the level
+        new Raycaster.Classes.Wall(100, 10, 700, 10, 0, 0, 200, 200, 1),
+        new Raycaster.Classes.Wall(10, 100, 10, 700, 0, 0, 200, 200, 1),
+        new Raycaster.Classes.Wall(10, 100, 100, 10, 0, 0, 200, 200, 1),
+        new Raycaster.Classes.Wall(790, 100, 790, 700, 0, 0, 200, 200, 1),
+        new Raycaster.Classes.Wall(700, 10, 790, 100, 0, 0, 200, 200, 1),
+        new Raycaster.Classes.Wall(100, 790, 700, 790, 0, 0, 200, 200, 1),
+        new Raycaster.Classes.Wall(790, 700, 700, 790, 0, 0, 200, 200, 1),
+        new Raycaster.Classes.Wall(10, 700, 100, 790, 0, 0, 200, 200, 1),
+        
+        // Angled and elevated walls
+        new Raycaster.Classes.Wall(300, 10, 300, 90, 0, 0, 120, 120, 0),
+        new Raycaster.Classes.Wall(300, 90, 300, 130, 40, 120, 80, 80, 0),
+        new Raycaster.Classes.Wall(300, 130, 300, 170, 120, 120, 80, 80, 0),
+        new Raycaster.Classes.Wall(300, 170, 300, 210, 120, 40, 80, 80, 0),
+        new Raycaster.Classes.Wall(300, 210, 300, 290, 0, 0, 120, 120, 0),
+    ],
+    
+    sprites: [
+        new Raycaster.Classes.Sprite(455, 171, 0, 2),
+        new Raycaster.Classes.Sprite(455, 137, 0, 2),
+        new Raycaster.Classes.Sprite(455, 103, 0, 2),
+        new Raycaster.Classes.Sprite(420, 230, 0, 0),
+        new Raycaster.Classes.Sprite(420, 247, 30, 0),
+        new Raycaster.Classes.Sprite(420, 265, 0, 0),
+    ],
+    
+    elevations: [    
+    ],
+    
+    floorTextureId: 4,
+    
+    // Generates a stairway in the level
+    init: function() {
+        Raycaster.Objects.player.angle.setValue(4);
+    }
+};
+
 Raycaster.Objects.Level = demoLevels[0];

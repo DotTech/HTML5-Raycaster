@@ -1,7 +1,7 @@
 HTML5 Raycaster Demo
 
 Author:     Ruud van Falier (ruud@dottech.nl)
-Version:    0.8
+Version:    0.9
 Released:   16 october 2011
 
 Demo:       http://www.dottech.nl/raycaster/
@@ -59,4 +59,6 @@ Revision log:
         - Movement key bindings got a different setup
         - Texture mapping procedure is improved and now stretches correctly.
           Textures now always stretch in height to fit the wall and repeat over the width.
-
+(0.9)   - Elevatated area support added (floor rendering not implemented)
+        - Demo levels added and level switch implemented
+        

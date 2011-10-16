@@ -206,6 +206,7 @@ Raycaster.Movement = function()
         //document.getElementById("chkFloor").addEventListener('change', Raycaster.engine.redraw);
         document.getElementById("chkSprites").addEventListener('change', Raycaster.engine.redraw);
         document.getElementById("ddlLevel").addEventListener('change', function() {
+            location.hash = document.getElementById("ddlLevel").selectedIndex;
             location.reload();
         });
     };
