@@ -14,7 +14,6 @@ Raycaster.RenderEngine = function()
         objects = Raycaster.Objects,
         drawing = Raycaster.Drawing,
         classes = Raycaster.Classes,
-        level = Raycaster.Objects.Level,
         raycasting = Raycaster.Raycasting,
         lastFpsUpdate = new Date().getTime();
     
@@ -58,23 +57,23 @@ Raycaster.RenderEngine = function()
                            drawing.colorRgb(255, 255, 255));
             
             // Draw elevations
-            for (var i in level.elevations) {
-                var elevation = level.elevations[i],
+            for (var i in Raycaster.Objects.Level.elevations) {
+                var elevation = Raycaster.Objects.Level.elevations[i],
                     area = elevation.area;
                     
                 drawing.square(area.x1 / shrinkFactor, area.y1 / shrinkFactor, (area.x2 - area.x1) / shrinkFactor, (area.y2 - area.y1) / shrinkFactor, drawing.colorRgb(255, 0, 0));
             }
             
             // Draw the walls
-            for (var i in level.walls) {
-                var wall = level.walls[i];
+            for (var i in Raycaster.Objects.Level.walls) {
+                var wall = Raycaster.Objects.Level.walls[i];
                 drawing.line(mapOffsetX + wall.x1 / shrinkFactor, mapOffsetY + wall.y1 / shrinkFactor, 
                              mapOffsetX + wall.x2 / shrinkFactor, mapOffsetY + wall.y2 / shrinkFactor, drawing.colorRgb(0, 0, 0));
             }
             
             // Draw sprites
-            for (var i in level.sprites) {
-                var sprite = level.sprites[i];
+            for (var i in Raycaster.Objects.Level.sprites) {
+                var sprite = Raycaster.Objects.Level.sprites[i];
                 drawing.circle(mapOffsetX + sprite.x / shrinkFactor, mapOffsetY + sprite.y / shrinkFactor, 2, drawing.colorRgb(0, 255, 0));
             }
             
@@ -156,7 +155,7 @@ Raycaster.RenderEngine = function()
         // Formula from: http://lodev.org/cgtutor/raycasting2.html
         if (objects.settings.renderFloor() && vscan % step == 0) {
             
-            var floorTexture = objects.textures[level.floorTextureId];
+            var floorTexture = objects.textures[Raycaster.Objects.Level.floorTextureId];
             
             for (var y = startY; y < constants.screenHeight; y += step) {
                 var curdist = constants.screenHeight / (2 * y - constants.screenHeight);
@@ -284,8 +283,8 @@ Raycaster.RenderEngine = function()
     // If elevation has changed we need to update the player's Z coord
     var updateElevation = function() 
     {
-        for (var i in level.elevations) {
-            var elevation = level.elevations[i],
+        for (var i in Raycaster.Objects.Level.elevations) {
+            var elevation = Raycaster.Objects.Level.elevations[i],
                 area = elevation.area;
 
             if (objects.player.x >= area.x1 && objects.player.x <= area.x2 &&   

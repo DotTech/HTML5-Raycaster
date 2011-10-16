@@ -101,5 +101,5 @@ Raycaster.Objects =
         Raycaster.Objects.skyImage.onload = function() {
             Raycaster.Objects.redrawScreen = true;
         };
-    }
+    },
 }

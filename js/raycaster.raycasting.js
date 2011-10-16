@@ -13,7 +13,6 @@ Raycaster.Raycasting = function()
         player = objects.player,
         classes = Raycaster.Classes,
         constants = Raycaster.Constants,
-        level = objects.Level,
         fishbowlFixValue = 0;
     
     /****************** / Private methods / *****************/
@@ -126,8 +125,8 @@ Raycaster.Raycasting = function()
         }
         
         if (!dontRoundCoords) {
-            i.x = intersX;
-            i.y = intersY;
+            //i.x = intersX;
+            //i.y = intersY;
         }
         
         return i;
@@ -138,11 +137,11 @@ Raycaster.Raycasting = function()
     var setTextureParams = function(intersection)
     {
         if (objects.settings.renderTextures()) {
-            var wall = level.walls[intersection.levelObjectId],
+            var wall = Raycaster.Objects.Level.walls[intersection.levelObjectId],
                 length = getHypotenuseLength(wall.x1 - wall.x2, wall.y1 - wall.y2),
                 lengthToIntersection = getHypotenuseLength(wall.x1 - intersection.x, wall.y1 - intersection.y);
 
-            intersection.resourceIndex = level.walls[intersection.levelObjectId].textureId;
+            intersection.resourceIndex = Raycaster.Objects.Level.walls[intersection.levelObjectId].textureId;
             
             var textureWidth = objects.textures[intersection.resourceIndex].width,
                 textureHeight = objects.textures[intersection.resourceIndex].height;
@@ -181,8 +180,8 @@ Raycaster.Raycasting = function()
             rindex =        intersection.resourceIndex,     
             lindex =        intersection.levelObjectId,
             levelObject =   intersection.isSprite           // Level object definition (wall or sprite)
-                                ? level.sprites[lindex] 
-                                : level.walls[lindex],
+                                ? Raycaster.Objects.Level.sprites[lindex] 
+                                : Raycaster.Objects.Level.walls[lindex],
             texture =       intersection.isSprite           // Image object containing the texture to draw
                                 ? objects.sprites[rindex] 
                                 : objects.textures[rindex],
@@ -264,7 +263,7 @@ Raycaster.Raycasting = function()
     // This method calculates the height of a wall at a specific intersection
     var getWallHeight = function(intersection)
     {
-        var wall = objects.Level.walls[intersection.levelObjectId];
+        var wall = Raycaster.Objects.Level.walls[intersection.levelObjectId];
         
         if (wall.h1 == wall.h2) {
             return wall.h1;
@@ -282,7 +281,7 @@ Raycaster.Raycasting = function()
     // This method calculates the Z pos of a wall at a specific intersection
     var getWallZ = function(intersection)
     {
-        var wall = objects.Level.walls[intersection.levelObjectId];
+        var wall = Raycaster.Objects.Level.walls[intersection.levelObjectId];
         
         if (wall.z1 == wall.z2) {
             return wall.z1;
@@ -302,9 +301,9 @@ Raycaster.Raycasting = function()
         // Create a imaginary plane on which the sprite is drawn
         // That way we can check for sprites in exactly the same way we check for walls
         var planeAngle = new classes.Angle(angle.degrees - 90),
-            x = level.sprites[spriteId].x,
-            y = level.sprites[spriteId].y,
-            sprite = objects.sprites[level.sprites[spriteId].id],
+            x = Raycaster.Objects.Level.sprites[spriteId].x,
+            y = Raycaster.Objects.Level.sprites[spriteId].y,
+            sprite = objects.sprites[Raycaster.Objects.Level.sprites[spriteId].id],
             delta = getDeltaXY(planeAngle, (sprite.width - 1) / 2),
             plane = new classes.Vector(x - delta.x, y + delta.y, 
                                        x + delta.x, y - delta.y);
@@ -317,7 +316,7 @@ Raycaster.Raycasting = function()
             var lengthToIntersection = getHypotenuseLength(plane.x1 - intersection.x, plane.y1 - intersection.y);
             
             intersection.textureX = Math.floor(lengthToIntersection);
-            intersection.resourceIndex = level.sprites[spriteId].id;
+            intersection.resourceIndex = Raycaster.Objects.Level.sprites[spriteId].id;
             intersection.levelObjectId = spriteId;
             intersection.isSprite = true;
             
@@ -335,7 +334,7 @@ Raycaster.Raycasting = function()
     var findWall = function(angle, wallId)
     {
         // Find intersection point on current wall
-        var intersection = getIntersection(level.walls[wallId], angle);
+        var intersection = getIntersection(Raycaster.Objects.Level.walls[wallId], angle);
         
         if (intersection) {
             intersection.levelObjectId = wallId;
@@ -364,7 +363,7 @@ Raycaster.Raycasting = function()
         }
         
         // Find walls
-        for (var i = 0; i < level.walls.length; i++) {
+        for (var i = 0; i < Raycaster.Objects.Level.walls.length; i++) {
             var intersection = findWall(angle, i);
             if (intersection) {
                 intersections[intersections.length] = intersection;
@@ -372,7 +371,7 @@ Raycaster.Raycasting = function()
         }
         
         // Find sprites
-        for (var i = 0; i < level.sprites.length; i++) {
+        for (var i = 0; i < Raycaster.Objects.Level.sprites.length; i++) {
             var intersection = findSprite(angle, i);
             if (intersection) {
                 intersections[intersections.length] = intersection;
