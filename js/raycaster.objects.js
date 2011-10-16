@@ -31,7 +31,7 @@ Raycaster.Objects =
             return document.getElementById("chkSky").checked;
         },
         renderFloor: function() {
-            return document.getElementById("chkFloor").checked;
+            return false; //document.getElementById("chkFloor").checked;
         },
         renderSprites: function() {
             return document.getElementById("chkSprites").checked;

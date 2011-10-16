@@ -45,6 +45,20 @@ Raycaster.Classes =
         this.maxHeight = h1 > h2 ? h1 : h2;
     },
     
+    /*
+    // Class:       Raycaster.Classes.Elevation
+    // Description: Defines an elevation in the floor
+    */
+    Elevation: function(height, area) {
+        this.area = area;       // One Vector defining the size of the elevated area.
+                                // Currently limits to elevations being squared and angled straight
+        this.height = height;   // Height of the elevation
+    },
+    
+    /*
+    // Class:       Raycaster.Classes.VSliceDrawParams
+    // Description: Drawing parameters for a vertical slice (scanline) of an object
+    */
     VSliceDrawParams: function() {
         return {
             dy1: 0,         // Destination start Y coord

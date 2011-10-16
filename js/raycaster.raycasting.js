@@ -193,22 +193,15 @@ Raycaster.Raycasting = function()
                                 ? objHeight 
                                 : levelObject.maxHeight,
             objectZ =       intersection.isSprite           // Z-position of the object at current intersection
-                                ? 0
+                                ? levelObject.z
                                 : getWallZ(intersection),
             height =        Math.floor(objHeight / distance * constants.distanceToViewport);    // Height of the object on screen
         
-        // scanlineOffsY offsets the drawing position of the vertical slice.
-        // This is used for sprites that need to be placed at a certain height
-        if (intersection.isSprite && levelObject.yoff) {
-            scanlineOffsY = Math.floor(levelObject.yoff / distance * constants.distanceToViewport);
-        }
-        
         // horizonOffset is used for aligning walls and objects correctly on the horizon.
         // Without this value, everything would always be vertically centered.
-        // The correction for scanlineOffsY (sprite positioning) is accounted for in this value.
         var eyeHeight = player.height * 0.75,
             base = (eyeHeight + player.z - objectZ) * 2,
-            horizonOffset = (height - Math.floor(base / distance * constants.distanceToViewport)) / 2 - scanlineOffsY;
+            horizonOffset = (height - Math.floor(base / distance * constants.distanceToViewport)) / 2;
         
         // Determine where to start and end the scanline on the screen
         var scanlineEndY = parseInt((objects.centerOfScreen.y - horizonOffset) + height / 2),
@@ -227,7 +220,9 @@ Raycaster.Raycasting = function()
         // Now that we've determined the size and location of the scanline,
         // we calculate which part of the texture image we need to render onto the scanline
         // When part of the object is located outside of the screen we dont need to copy that part of the texture image.
-        if (objects.settings.renderTextures()) {
+        if ((!intersection.isSprite && objects.settings.renderTextures())
+            || (intersection.isSprite && objects.settings.renderSprites()))        
+        {
             var scale = height / texture.height, // Height ratio of the object compared to its original size
                 srcStartY = 0,                   // Start Y coord of source image data
                 srcEndY = texture.height;        // End y coord of source image data
@@ -245,13 +240,14 @@ Raycaster.Raycasting = function()
             }
             
             // Prevent the texture from appearing skewed when wall height is angled
-            if (objMaxHeight > objHeight) {
+            // This is bugged:
+            /*if (objMaxHeight > objHeight) {
                 var maxHeight = Math.floor(objMaxHeight / distance * constants.distanceToViewport),
                     diff = Math.abs(maxHeight - height),
                     scale = maxHeight / texture.height;
                     
                 srcStartY += Math.floor(diff / scale);
-            }
+            }*/
             
             intersection.drawParams.sy1 = srcStartY;
             intersection.drawParams.sy2 = srcEndY;

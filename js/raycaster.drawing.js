@@ -44,6 +44,30 @@ Raycaster.Drawing =
         context.closePath();
     },
     
+    filledPath: function(vectorArray, color, shrinkFactor)
+    {
+        var context = Raycaster.Objects.context;
+        context.beginPath();
+        
+        for (var i in vectorArray) {
+            var vector = vectorArray[i],
+                x1 = shrinkFactor ? vector.x1 / shrinkFactor : vector.x1,
+                x2 = shrinkFactor ? vector.x2 / shrinkFactor : vector.x2,
+                y1 = shrinkFactor ? vector.y1 / shrinkFactor : vector.y1,
+                y2 = shrinkFactor ? vector.y2 / shrinkFactor : vector.y2;
+            
+            if (i == 0) {
+                context.moveTo(x1, y1);
+            }
+            context.lineTo(x2, y2);
+        }
+        
+        context.fillStyle = color;
+        context.fill();
+        
+        context.closePath();
+    },
+    
     // Draws a line
     // Note: for some reason lineTo() and stroke() result in a semi-transparent line
     // If you want to be sure the line is of solid color, use lineSquare() instead

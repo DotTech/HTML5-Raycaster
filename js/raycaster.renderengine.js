@@ -45,21 +45,37 @@ Raycaster.RenderEngine = function()
     {
         if (objects.settings.renderMiniMap()) {
             // Map is smaller than world, determine shrink factor
-            var shrinkFactor = 10,
+            var shrinkFactor = 5,
                 mapOffsetX = 0,
                 mapOffsetY = 0,
                 odd = false;
             
+            context.globalAlpha = 0.6;
+            
             // Draw white background
             drawing.square(mapOffsetX, mapOffsetY, 
-                           80, 80,
+                           160, 160,
                            drawing.colorRgb(255, 255, 255));
+            
+            // Draw elevations
+            for (var i in level.elevations) {
+                var elevation = level.elevations[i],
+                    area = elevation.area;
+                    
+                drawing.square(area.x1 / shrinkFactor, area.y1 / shrinkFactor, (area.x2 - area.x1) / shrinkFactor, (area.y2 - area.y1) / shrinkFactor, drawing.colorRgb(255, 0, 0));
+            }
             
             // Draw the walls
             for (var i in level.walls) {
                 var wall = level.walls[i];
                 drawing.line(mapOffsetX + wall.x1 / shrinkFactor, mapOffsetY + wall.y1 / shrinkFactor, 
                              mapOffsetX + wall.x2 / shrinkFactor, mapOffsetY + wall.y2 / shrinkFactor, drawing.colorRgb(0, 0, 0));
+            }
+            
+            // Draw sprites
+            for (var i in level.sprites) {
+                var sprite = level.sprites[i];
+                drawing.circle(mapOffsetX + sprite.x / shrinkFactor, mapOffsetY + sprite.y / shrinkFactor, 2, drawing.colorRgb(0, 255, 0));
             }
             
             // Draw player
@@ -82,6 +98,8 @@ Raycaster.RenderEngine = function()
                 
                 angle.turn(-constants.angleBetweenRays * rayStep);
             }
+            
+            context.globalAlpha = 1;
         }
     };
     
@@ -183,7 +201,7 @@ Raycaster.RenderEngine = function()
         //drawFloor(vscan, drawParams.dy2, intersection);
     }
     
-
+    // Draw the vertical slice for a wall
     var drawWall = function(vscan, intersection)
     {
         var drawParams = intersection.drawParams;
@@ -205,6 +223,7 @@ Raycaster.RenderEngine = function()
         }
     }
     
+    // Draw the vertical slice for a sprite
     var drawSprite = function(vscan, intersection)
     {
         if (objects.settings.renderSprites()) {
@@ -231,6 +250,15 @@ Raycaster.RenderEngine = function()
         }
     }
     
+    // Calculates the opacity for the black overlay image that is used to make objects in the distance appear darker
+    var calcDistanceOpacity = function(distance) 
+    {
+        var colorDivider = parseFloat(distance / (constants.startFadingAt * 1.5)); 
+        colorDivider = (colorDivider > 5) ? 5 : colorDivider;
+        
+        return parseFloat(1 - 1 / colorDivider);
+    };
+    
     // Draw 3D representation of the world
     var drawWorld = function()
     {
@@ -252,15 +280,24 @@ Raycaster.RenderEngine = function()
         }
     };
     
-    // Calculates the opacity for the black overlay image that is used to make objects in the distance appear darker
-    var calcDistanceOpacity = function(distance) 
+    // Calculates if the player is standing inside an elevated area and returns the elevation
+    // If elevation has changed we need to update the player's Z coord
+    var updateElevation = function() 
     {
-        var colorDivider = parseFloat(distance / (constants.startFadingAt * 1.5)); 
-        colorDivider = (colorDivider > 5) ? 5 : colorDivider;
+        for (var i in level.elevations) {
+            var elevation = level.elevations[i],
+                area = elevation.area;
+
+            if (objects.player.x >= area.x1 && objects.player.x <= area.x2 &&   
+                objects.player.y >= area.y1 && objects.player.y <= area.y2) 
+            {
+                objects.player.z = elevation.height;
+                return;
+            }
+        }
         
-        return parseFloat(1 - 1 / colorDivider);
+        objects.player.z = 0;
     };
-    
     
     /****************** / Public methods / *****************/
     // Tell renderengine that a redraw is required
@@ -273,6 +310,7 @@ Raycaster.RenderEngine = function()
     var update = function()
     {
         if (objects.redrawScreen) {
+            updateElevation();
             drawWorld();
             drawMiniMap();
             drawDebugInfo();

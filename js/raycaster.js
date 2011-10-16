@@ -29,11 +29,13 @@
 */
 var Raycaster = function() 
 {
+    var level = "default";
+    
     // Define include files
     var jsfolder = "js/",
         includes = [
         "raycaster.constants.js", "raycaster.classes.js", "raycaster.objects.js", 
-        "raycaster.objects.level.js", "raycaster.drawing.js",
+        "raycaster.objects.level." + level + ".js", "raycaster.drawing.js",
         "raycaster.raycasting.js", "raycaster.renderengine.js", "raycaster.movement.js"
     ];
     
@@ -60,6 +62,9 @@ var Raycaster = function()
         
         // Load texture and sprite files
         Raycaster.Objects.loadResources();
+        
+        // Call level init (to allow runtime modifications to level)
+        Raycaster.Objects.Level.init();
         
         // Create an instance of the RenderEngine
         Raycaster.engine = new Raycaster.RenderEngine();

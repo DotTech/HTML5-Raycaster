@@ -11,7 +11,7 @@ Raycaster.Constants =
     movementStep: 9,        // How much the player moves each step
     turningStep: 3,         // How fast the player turns
     startFadingAt: 100,     // At what distance to start fading visibility
-    playerStartAngle: 0,    // Angle player is viewing at on startup
+    playerStartAngle: 273,  // Angle player is viewing at on startup
     playerStartPos: {       // Location of player on startup
         x: 80,
         y: 160,
