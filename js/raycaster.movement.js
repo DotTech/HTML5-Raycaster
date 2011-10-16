@@ -50,7 +50,7 @@ Raycaster.Movement = function()
     {
         step = forward ? Raycaster.Constants.movementStep : -Raycaster.Constants.movementStep;
         
-        var delta = Raycaster.Utils.getDeltaXY(player.angle, step);
+        var delta = Raycaster.Raycasting.getDeltaXY(player.angle, step);
         
         var angle = forward 
             ? player.angle 
@@ -66,6 +66,20 @@ Raycaster.Movement = function()
         Raycaster.engine.redraw();
     };
     
+    // Elevate player up or down
+    var elevate = function(up)
+    {
+        step = up ? Raycaster.Constants.movementStep : -Raycaster.Constants.movementStep;
+        player.z += step;
+        
+        // Prevent player from going under ground
+        if (player.z < 0) {
+            player.z = 0;
+        }
+        
+        Raycaster.engine.redraw();
+    };
+    
     // Make player strafe left or right
     var strafe = function(left)
     {
@@ -73,7 +87,7 @@ Raycaster.Movement = function()
             ? new Raycaster.Classes.Angle(player.angle.degrees + 90)
             : new Raycaster.Classes.Angle(player.angle.degrees - 90);
         
-        var delta = Raycaster.Utils.getDeltaXY(angle, Raycaster.Constants.movementStep);
+        var delta = Raycaster.Raycasting.getDeltaXY(angle, Raycaster.Constants.movementStep);
             intersection = findIntersection(angle);
         
         if (!intersection || intersection.distance > 20) {
@@ -88,42 +102,30 @@ Raycaster.Movement = function()
     // Update movement
     var update = function()
     {
-        // Turn or strafe left
-        if (Raycaster.Objects.keys.arrowLeft.pressed) {
-            if (Raycaster.Objects.keys.shift.pressed) {
-                strafe(true);
-            }
-            else {
-                turn(Raycaster.Constants.turningStep);
-            }
+        // Turn left
+        if (Raycaster.Objects.keys.arrowLeft.pressed || Raycaster.Objects.keys.charQ.pressed) {
+            turn(Raycaster.Constants.turningStep);
         }
-        
-        // Turn or strafe right
-        if (Raycaster.Objects.keys.arrowRight.pressed) {
-            if (Raycaster.Objects.keys.shift.pressed) {
-                strafe(false);
-            }
-            else {
-                turn(-Raycaster.Constants.turningStep);
-            }
+        // Turn right
+        else if (Raycaster.Objects.keys.arrowRight.pressed || Raycaster.Objects.keys.charE.pressed) {
+            turn(-Raycaster.Constants.turningStep);
         }
         
         // Walk forward
-        if (Raycaster.Objects.keys.arrowUp.pressed) {
+        if (Raycaster.Objects.keys.arrowUp.pressed || Raycaster.Objects.keys.charW.pressed) {
             walk(true);
         }
-        
         // Walk backward
-        if (Raycaster.Objects.keys.arrowDown.pressed) {
+        else if (Raycaster.Objects.keys.arrowDown.pressed || Raycaster.Objects.keys.charS.pressed) {
             walk(false);
         }
         
         // Strafe left
-        if (Raycaster.Objects.keys.lessThan.pressed) {
+        if (Raycaster.Objects.keys.charA.pressed) {
             strafe(true);
         }
         // Strafe right
-        else if (Raycaster.Objects.keys.greaterThan.pressed) {
+        else if (Raycaster.Objects.keys.charD.pressed) {
             strafe(false);
         }
         
@@ -139,7 +141,12 @@ Raycaster.Movement = function()
             Raycaster.engine.redraw();
         }
         
-        if (Raycaster.Objects.keys.charA.pressed) {
+        if (Raycaster.Objects.keys.charZ.pressed) {
+            elevate(true);
+        }
+        
+        if (Raycaster.Objects.keys.charX.pressed) {
+            elevate(false);
         }
     }
     

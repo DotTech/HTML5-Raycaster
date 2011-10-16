@@ -49,6 +49,12 @@ Raycaster.Objects =
         charR: new Raycaster.Classes.KeyButton(82),
         charA: new Raycaster.Classes.KeyButton(65),
         charZ: new Raycaster.Classes.KeyButton(90),
+        charQ: new Raycaster.Classes.KeyButton(81),
+        charW: new Raycaster.Classes.KeyButton(87),
+        charE: new Raycaster.Classes.KeyButton(69),
+        charS: new Raycaster.Classes.KeyButton(83),
+        charD: new Raycaster.Classes.KeyButton(68),
+        charX: new Raycaster.Classes.KeyButton(88),
     },
     
     centerOfScreen: new Raycaster.Classes.Point(Raycaster.Constants.screenWidth / 2, Raycaster.Constants.screenHeight / 2),

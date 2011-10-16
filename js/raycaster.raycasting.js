@@ -4,6 +4,8 @@
 //
 //  Public methods: findWall(angle):    returns Intersection object or false
 //                  findSprite(angle):  returns Intersection object or false
+//                  getWallHeight:      returns height for wall at specified intersection
+//                  getDeltaXY:         returns difference in x and y for a distance at specified angle
 */
 Raycaster.Raycasting = function()
 {
@@ -37,6 +39,14 @@ Raycaster.Raycasting = function()
         if (deltaX <= 0 && deltaY < 0) quadrant = 4;
         
         return quadrant == angle.getQuadrant();
+    }
+    
+    // Calculates the length of the hypotenuse side (angled side) of a triangle
+    // adjacentLength: length of the side adjacent to the angle
+    // oppositeLength: length of the side opposite of the angle
+    var getHypotenuseLength = function(adjacentLength, oppositeLength)
+    {
+        return Math.sqrt(Math.pow(Math.abs(adjacentLength), 2) + Math.pow(Math.abs(oppositeLength), 2));
     }
     
     // Calculate intersection point on a line (wall)
@@ -115,7 +125,7 @@ Raycaster.Raycasting = function()
             x = level.sprites[spriteId].x,
             y = level.sprites[spriteId].y,
             sprite = Raycaster.Objects.sprites[level.sprites[spriteId].id],
-            delta = Raycaster.Utils.getDeltaXY(planeAngle, (sprite.width - 1) / 2),
+            delta = getDeltaXY(planeAngle, (sprite.width - 1) / 2),
             plane = new Raycaster.Classes.Vector(x - delta.x, y + delta.y, 
                                                  x + delta.x, y - delta.y);
 
@@ -132,7 +142,7 @@ Raycaster.Raycasting = function()
             }
             
             // Determine which scanline of the sprite image to draw for this intersection
-            var lengthToIntersection = Math.sqrt(Math.pow(Math.abs(plane.x1 - intersection.x), 2) + Math.pow(Math.abs(plane.y1 - intersection.y), 2));
+            var lengthToIntersection = getHypotenuseLength(plane.x1 - intersection.x, plane.y1 - intersection.y);
             
             intersection.textureX = Math.floor(lengthToIntersection);
             intersection.resourceIndex = level.sprites[spriteId].id;
@@ -160,8 +170,8 @@ Raycaster.Raycasting = function()
             // Determine which scanline of the texture to draw for this intersection
             if (Raycaster.Objects.settings.renderTextures()) {
                 var wall = level.walls[wallId],
-                    length = Math.sqrt(Math.pow(Math.abs(wall.x1 - wall.x2), 2) + Math.pow(Math.abs(wall.y1 - wall.y2), 2)),
-                    lengthToIntersection = Math.sqrt(Math.pow(Math.abs(wall.x1 - intersection.x), 2) + Math.pow(Math.abs(wall.y1 - intersection.y), 2));
+                    length = getHypotenuseLength(wall.x1 - wall.x2, wall.y1 - wall.y2),
+                    lengthToIntersection = getHypotenuseLength(wall.x1 - intersection.x, wall.y1 - intersection.y);
 
                 intersection.resourceIndex = level.walls[wallId].textureId;
                 
@@ -238,19 +248,28 @@ Raycaster.Raycasting = function()
             return wall.h1;
         }
         
-        var length = Math.sqrt(Math.pow(Math.abs(wall.x1 - wall.x2), 2) + Math.pow(Math.abs(wall.y1 - wall.y2), 2)),
+        var length = getHypotenuseLength(wall.x1 - wall.x2, wall.y1 - wall.y2),
             slope = (wall.h2 - wall.h1) / length,
-            lengthToIntersection = Math.sqrt(Math.pow(Math.abs(wall.x1 - intersection.x), 2) + Math.pow(Math.abs(wall.y1 - intersection.y), 2)),
+            lengthToIntersection = getHypotenuseLength(wall.x1 - intersection.x, wall.y1 - intersection.y),
             height = wall.h1 + (lengthToIntersection * slope);
         
         return height;
     }
     
+    // Calculate difference in X and Y for a distance at a specific angle
+    var getDeltaXY = function(angle, distance) 
+    {
+        return new Raycaster.Classes.Point(
+            Math.cos(angle.radians) * distance,
+            Math.sin(angle.radians) * distance
+        );
+    }
     
     // Expose public members
     return {
         findWalls : findWalls,
         findSprites: findSprites,
-        getWallHeight: getWallHeight
+        getWallHeight: getWallHeight,
+        getDeltaXY: getDeltaXY
     };
 }();

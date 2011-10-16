@@ -31,7 +31,7 @@ Raycaster.Classes =
     // Class:       Raycaster.Classes.Wall
     // Description: Parameters that define a wall in the game world
     */
-    Wall: function(x1, y1, x2, y2, h1, h2, textureId, noStretch) {
+    Wall: function(x1, y1, x2, y2, h1, h2, textureId) {
         this.x1 = x1;   // x1, y1: wall start point
         this.y1 = y1;
         this.x2 = x2;   // x2, y2: wall end point
@@ -40,7 +40,6 @@ Raycaster.Classes =
         this.h2 = h2;   // wall height at end
         this.textureId = textureId; // id (index in Constants.texturesFiles array) of texture to use on this wall
         this.maxHeight = h1 > h2 ? h1 : h2;
-        this.noStretch = noStretch; // prevent texture from being stretched in height if it doesnt fit the wall
     },
     
     VSliceDrawParams: function() {

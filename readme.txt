@@ -1,8 +1,8 @@
 HTML5 Raycaster Demo
 
 Author:     Ruud van Falier (ruud@dottech.nl)
-Version:    0.7.1
-Released:   -
+Version:    0.8
+Released:   16 october 2011
 
 Demo:       http://www.dottech.nl/raycaster/
 Git:        https://github.com/Stribe/HTML5-Raycaster
@@ -17,12 +17,12 @@ The old (orthogonal walls) version is available from the v0.3 branch.
 Feel free to use it for whatever you need it for.
 
 Planned features:
-- Repeating textures (instead of being stretched)
 - Sectors
+- Support for elevated floors in level
+- Repeating textures (instead of being stretched)
 
 Optimizations/fixes planned:
 - When drawing a wall slice, remember intersection and use it during sprite rendering to avoid having to search for blocking walls
-- Overall performance analysis is required to find bottlenecks
 - Sprites are not visible behind walls with lower height than the sprite
 
 Revision log:
@@ -49,8 +49,12 @@ Revision log:
           Also turns out that the big performance eater is not drawing, but calculating.
         - Implemented a few performance tweaks:
           * VSliceDrawParams and Intersection are now returning objects and dont need to be instantiated
-          * Math.round() replaced for bitwise hack
+          * Math.round() replaced for bitwise hack in functions that are frequently called
         - Fixed bug in Raycasting.correctQuadrant() which returned incorrect result at straight angles
         - Fixed texturing bug at 0 degrees (turns out i should not ignore angle=360 degrees, doh)
         - Experimental floorcasting implemented, its way too slow though
+        - Player Z coord added and implemented elevation
+        - Movement key bindings got a different setup
+        - Texture mapping procedure is improved and now stretches correctly.
+          Textures now always stretch in height to fit the wall and repeat over the width.
 

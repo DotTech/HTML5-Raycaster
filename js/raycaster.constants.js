@@ -4,7 +4,7 @@
 */
 Raycaster.Constants =
 {
-    horizonOffset: 32,      // Defines how far underneath the screen center the world is drawn
+    horizonBaseZ: 32,       // Base Z value needed to correctly align objects to the horizon when player is on the ground (z=0)
     fieldOfView: 66,        // Field of view of the player (in degrees)
     screenWidth: 640,       // Width of the viewport
     screenHeight: 480,      // Height of the viewport
@@ -12,30 +12,30 @@ Raycaster.Constants =
     movementStep: 9,        // How much the player moves each step
     turningStep: 3,         // How fast the player turns
     startFadingAt: 100,     // At what distance to start fading visibility
-    playerStartAngle: 70,
-    playerStartPos: {
-        x: 70,
-        y: 200,
+    playerStartAngle: 35,   // Angle player is viewing at on startup
+    playerStartPos: {       // Location of player on startup
+        x: 50,
+        y: 410,
         z: 0
     },
-    distanceToViewport: 0,
-    noClipping: false,  // Allows player to walk through walls and objects
+    distanceToViewport: 0,  // This value is calculated once one startup
+    noClipping: false,      // Allows player to walk through walls and objects
     displayDebugInfo: false,
     runningLocal: location.href.indexOf("file://") > -1,
-    texturesFiles: [
+    texturesFiles: [        // Image files for wall textures
         "img/bricks-brown.png",
         "img/bricks-gray.png",
         "img/painting.png",
         "img/wood.png",
         "img/floor.png",
     ],
-    spriteFiles: [
+    spriteFiles: [          // Image files for sprites
         "img/barrel.png",
         "img/barrel_mask.png",
         "img/pillar.png",
         "img/pillar_mask.png",
     ],
-    skyImage: "img/sky.jpg",
-    debugFont: "bold 12px arial",
-    glIntervalTimeout: 50
+    skyImage: "img/sky.jpg",        // Background image (sky)
+    debugFont: "bold 12px arial",   // Font for debug info
+    glIntervalTimeout: 50           // Gameloop interval timeout
 };

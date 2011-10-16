@@ -35,7 +35,7 @@ Raycaster.RenderEngine = function()
             Raycaster.Drawing.text(fpsText, 590, 10, Raycaster.Drawing.colorRgb(255, 255, 255), Raycaster.Constants.debugFont);
             lastFpsUpdate = new Date().getTime();
             
-            Raycaster.Drawing.text("X: " + Math.round(objects.player.x) + " Y: " + Math.round(objects.player.y), 550, 30, Raycaster.Drawing.colorRgb(255, 255, 255), Raycaster.Constants.debugFont);
+            Raycaster.Drawing.text("X: " + Math.round(objects.player.x) + " Y: " + Math.round(objects.player.y) + " Z: " + Math.round(objects.player.z), 530, 30, Raycaster.Drawing.colorRgb(255, 255, 255), Raycaster.Constants.debugFont);
             Raycaster.Drawing.text("A: " + objects.player.angle.degrees, 590, 50, Raycaster.Drawing.colorRgb(255, 255, 255), Raycaster.Constants.debugFont);
         }
     }
@@ -338,7 +338,7 @@ Raycaster.RenderEngine = function()
         // horizonOffset is used for aligning walls and objects correctly on the horizon.
         // Without this value, everything would always be vertically centered.
         // The correction for scanlineOffsetY (sprite positioning) is accounted for in this value.
-        var horizonOffset = (height - Math.floor(constants.horizonOffset * 2 / distance * constants.distanceToViewport)) / 2 - scanlineOffsetY;
+        var horizonOffset = (height - Math.floor((constants.horizonBaseZ + objects.player.z) * 2 / distance * constants.distanceToViewport)) / 2 - scanlineOffsetY;
         
         // Determine where to start and end the scanline on the screen
         var scanlineEndY = parseInt((objects.centerOfScreen.y - horizonOffset) + height / 2),
