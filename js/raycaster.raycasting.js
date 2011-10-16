@@ -9,7 +9,12 @@
 */
 Raycaster.Raycasting = function()
 {
-    var player = Raycaster.Objects.player;
+    var objects = Raycaster.Objects,
+        player = objects.player,
+        classes = Raycaster.Classes,
+        constants = Raycaster.Constants,
+        level = objects.Level,
+        fishbowlFixValue = 0;
     
     /****************** / Private methods / *****************/
     // Determine wether an intersection is located in the quadrant we are looking at
@@ -49,6 +54,15 @@ Raycaster.Raycasting = function()
         return Math.sqrt(Math.pow(Math.abs(adjacentLength), 2) + Math.pow(Math.abs(oppositeLength), 2));
     }
     
+    // Calculate value needed to manipulate distance to counter "fishbowl effect"
+    var setFishbowlFixValue = function(vscan)
+    {
+        var distortRemove = new classes.Angle(constants.fieldOfView / 2);
+        distortRemove.turn(-constants.angleBetweenRays * vscan);
+        
+        fishbowlFixValue = Math.cos(distortRemove.radians);
+    };
+    
     // Calculate intersection point on a line (wall)
     // Formula found here: http://paulbourke.net/geometry/lineline2d/
     var getIntersection = function(line, angle, dontRoundCoords) 
@@ -64,7 +78,7 @@ Raycaster.Raycasting = function()
                  ((line.y2 - line.y1) * (px2 - px1) - (line.x2 - line.x1) * (py2 - py1));
         
         // Calculate where the ray intersects with the line
-        var i = Raycaster.Classes.Intersection();
+        var i = classes.Intersection();
             i.x = px1 + f1 * (px2 - px1),
             i.y = py1 + f1 * (py2 - py1);
         
@@ -111,138 +125,150 @@ Raycaster.Raycasting = function()
             i.distance = Math.abs(deltaY / Math.sin(angle.radians));
         }
         
+        if (!dontRoundCoords) {
+            i.x = intersX;
+            i.y = intersY;
+        }
+        
         return i;
     };
 
-    // Find intersection on a specific sprite that is in the players field of view
-    var findSprite = function(angle, spriteId)
+    // Texture mapping routine for walls
+    // Determines which scanline of the texture to draw for this intersection
+    var setTextureParams = function(intersection)
     {
-        var level = Raycaster.Objects.Level;
-        
-        // Create a imaginary plane on which the sprite is drawn
-        // That way we can check for sprites in exactly the same way we check for walls
-        var planeAngle = new Raycaster.Classes.Angle(angle.degrees - 90),
-            x = level.sprites[spriteId].x,
-            y = level.sprites[spriteId].y,
-            sprite = Raycaster.Objects.sprites[level.sprites[spriteId].id],
-            delta = getDeltaXY(planeAngle, (sprite.width - 1) / 2),
-            plane = new Raycaster.Classes.Vector(x - delta.x, y + delta.y, 
-                                                 x + delta.x, y - delta.y);
+        if (objects.settings.renderTextures()) {
+            var wall = level.walls[intersection.levelObjectId],
+                length = getHypotenuseLength(wall.x1 - wall.x2, wall.y1 - wall.y2),
+                lengthToIntersection = getHypotenuseLength(wall.x1 - intersection.x, wall.y1 - intersection.y);
 
-        // Find intersection point on the plane
-        var intersection = getIntersection(plane, angle, true);
-        
-        if (intersection) {
+            intersection.resourceIndex = level.walls[intersection.levelObjectId].textureId;
             
-            // Check if the intersection is blocked by a wall
-            // Don't return sprite intersection if it's blocked
-            var wallints = findWalls(angle);
-            if (wallints.length > 0 && wallints[wallints.length - 1].distance < intersection.distance) {
+            var textureWidth = objects.textures[intersection.resourceIndex].width,
+                textureHeight = objects.textures[intersection.resourceIndex].height;
+            
+            // Wall textures are stretched in height and repeated over the width
+            if (wall.maxHeight != textureHeight) {
+                lengthToIntersection *= textureHeight / wall.maxHeight;
+            }
+            
+            intersection.textureX = parseInt(lengthToIntersection % objects.textures[intersection.resourceIndex].width);
+        }
+    };
+    
+    /*
+    // Method:      Raycaster.Raycasting.setVSliceDrawParams
+    // Description:
+    //   Once we know the distance to a wall or sprite, this function calculates the parameters 
+    //   that are required to draw the vertical slice for it.
+    //   It also accounts for leaving away pixels of the object if it exceeds the size of the viewport.
+    //   Returns FALSE if the intersection is not visible to the player
+    //
+    // Input parameters:
+    // - intersection:  intersection with the object to draw
+    //
+    // The following parameters are calculated:
+    // - dy1:       Starting point of the slice on the destination (the screen) 
+    // - dy2:       End point of the slice on the destination
+    // - sy1:       Starting point of the slice on the source (the texture image)
+    // - sy2:       End point of the slice on the source
+    // - texture:   Image object containing the texture to draw
+    */
+    var setVSliceDrawParams = function(intersection)
+    {   
+        var scanlineOffsY = 0,                              // Additional Y-offset for the scanline (used in sprites)
+            distance =      intersection.distance * fishbowlFixValue, // Distance to the intersection
+            rindex =        intersection.resourceIndex,     
+            lindex =        intersection.levelObjectId,
+            levelObject =   intersection.isSprite           // Level object definition (wall or sprite)
+                                ? level.sprites[lindex] 
+                                : level.walls[lindex],
+            texture =       intersection.isSprite           // Image object containing the texture to draw
+                                ? objects.sprites[rindex] 
+                                : objects.textures[rindex],
+            objHeight =     intersection.isSprite           // Original height of the object at current intersection
+                                ? texture.height 
+                                : getWallHeight(intersection),
+            objMaxHeight =  intersection.isSprite           // Maximum possible height of the object (used in walls with angled height)
+                                ? objHeight 
+                                : levelObject.maxHeight,
+            objectZ =       intersection.isSprite           // Z-position of the object at current intersection
+                                ? 0
+                                : getWallZ(intersection),
+            height =        Math.floor(objHeight / distance * constants.distanceToViewport);    // Height of the object on screen
+        
+        // scanlineOffsY offsets the drawing position of the vertical slice.
+        // This is used for sprites that need to be placed at a certain height
+        if (intersection.isSprite && levelObject.yoff) {
+            scanlineOffsY = Math.floor(levelObject.yoff / distance * constants.distanceToViewport);
+        }
+        
+        // horizonOffset is used for aligning walls and objects correctly on the horizon.
+        // Without this value, everything would always be vertically centered.
+        // The correction for scanlineOffsY (sprite positioning) is accounted for in this value.
+        var eyeHeight = player.height * 0.75,
+            base = (eyeHeight + player.z - objectZ) * 2,
+            horizonOffset = (height - Math.floor(base / distance * constants.distanceToViewport)) / 2 - scanlineOffsY;
+        
+        // Determine where to start and end the scanline on the screen
+        var scanlineEndY = parseInt((objects.centerOfScreen.y - horizonOffset) + height / 2),
+            scanlineStartY = scanlineEndY - height;
+        
+        // Prevent the coordinates from being off-screen
+        intersection.drawParams = classes.VSliceDrawParams();
+        intersection.drawParams.dy1 = scanlineStartY < 0 ? 0 : scanlineStartY;
+        intersection.drawParams.dy2 = scanlineEndY > constants.screenHeight ? constants.screenHeight : scanlineEndY;
+        intersection.drawParams.texture = texture;
+        
+        if (intersection.drawParams.dy2 < 0 || intersection.drawParams.dy1 > constants.screenHeight) {
+            return false;
+        }
+        
+        // Now that we've determined the size and location of the scanline,
+        // we calculate which part of the texture image we need to render onto the scanline
+        // When part of the object is located outside of the screen we dont need to copy that part of the texture image.
+        if (objects.settings.renderTextures()) {
+            var scale = height / texture.height, // Height ratio of the object compared to its original size
+                srcStartY = 0,                   // Start Y coord of source image data
+                srcEndY = texture.height;        // End y coord of source image data
+            
+            // Compensate for bottom part being offscreen
+            if (scanlineEndY > constants.screenHeight) {
+                var remove = (scanlineEndY - constants.screenHeight) / scale;
+                srcEndY -= remove;
+            }
+            
+            // Compensate for top part being offscreen
+            if (scanlineStartY < 0) {
+                var remove = Math.abs(scanlineStartY) / scale;
+                srcStartY += remove;
+            }
+            
+            // Prevent the texture from appearing skewed when wall height is angled
+            if (objMaxHeight > objHeight) {
+                var maxHeight = Math.floor(objMaxHeight / distance * constants.distanceToViewport),
+                    diff = Math.abs(maxHeight - height),
+                    scale = maxHeight / texture.height;
+                    
+                srcStartY += Math.floor(diff / scale);
+            }
+            
+            intersection.drawParams.sy1 = srcStartY;
+            intersection.drawParams.sy2 = srcEndY;
+            
+            if (intersection.drawParams.sy2 <= intersection.drawParams.sy1) {
                 return false;
             }
-            
-            // Determine which scanline of the sprite image to draw for this intersection
-            var lengthToIntersection = getHypotenuseLength(plane.x1 - intersection.x, plane.y1 - intersection.y);
-            
-            intersection.textureX = Math.floor(lengthToIntersection);
-            intersection.resourceIndex = level.sprites[spriteId].id;
-            intersection.levelObjectId = spriteId;
-            
-            return intersection;
         }
         
-        return false;
-    };
-    
-    // Find intersection on a specific wall that is in the players field of view
-    var findWall = function(angle, wallId)
-    {
-        var level = Raycaster.Objects.Level,
-            intersection = false;
-        
-        // Find intersection point on current wall
-        var intersection = getIntersection(level.walls[wallId], angle);
-        
-        if (intersection) {
-            intersection.levelObjectId = wallId;
-            
-            // Texture mapping routine
-            // Determine which scanline of the texture to draw for this intersection
-            if (Raycaster.Objects.settings.renderTextures()) {
-                var wall = level.walls[wallId],
-                    length = getHypotenuseLength(wall.x1 - wall.x2, wall.y1 - wall.y2),
-                    lengthToIntersection = getHypotenuseLength(wall.x1 - intersection.x, wall.y1 - intersection.y);
-
-                intersection.resourceIndex = level.walls[wallId].textureId;
-                
-                var textureWidth = Raycaster.Objects.textures[intersection.resourceIndex].width,
-                    textureHeight = Raycaster.Objects.textures[intersection.resourceIndex].height;
-                
-                // Wall textures are stretched in height and repeated over the width
-                if (wall.maxHeight != textureHeight) {
-                    lengthToIntersection *= textureHeight / wall.maxHeight;
-                }
-                
-                intersection.textureX = parseInt(lengthToIntersection % Raycaster.Objects.textures[intersection.resourceIndex].width);
-            }
-        }
-        
-        return intersection;
-    };
-    
-    
-    /****************** / Public methods / *****************/    
-    // Find intersection for all the walls that are in viewing range.
-    // Returns an array of intersection objects, sorted descending by distance
-    var findWalls = function(angle)
-    {
-        var intersections = new Array(),
-            level = Raycaster.Objects.Level;
-        
-        // Test for every wall wether it intersects with the player's view angle
-        for (var i = 0; i < level.walls.length; i++) {
-            var intersection = findWall(angle, i);
-            if (intersection) {
-                intersections[intersections.length] = intersection;
-            }
-        }
-        
-        // Sort the walls by distance so that the once further away are drawn first
-        intersections.sort(function(i1, i2) {
-            return i2.distance - i1.distance;
-        });
-        
-        return intersections;
-    };
-    
-    // Find intersection for all sprites that are in viewing range.
-    // Returns an array of intersection objects, sorted descending by distance
-    var findSprites = function(angle)
-    {
-        var intersections = new Array(),
-            level = Raycaster.Objects.Level;
-        
-        // Test for every sprite wether its intersects with player's view angle
-        for (var i = 0; i < level.sprites.length; i++) {
-            var intersection = findSprite(angle, i);
-            if (intersection) {
-                intersections[intersections.length] = intersection;
-            }
-        }
-        
-        // Sort the sprites by distance so that the once further away are drawn first
-        intersections.sort(function(i1, i2) {
-            return i2.distance - i1.distance;
-        });
-        
-        return intersections;
-    };
+        return true;
+    }
     
     // Walls have a start and end height
     // This method calculates the height of a wall at a specific intersection
     var getWallHeight = function(intersection)
     {
-        var wall = Raycaster.Objects.Level.walls[intersection.levelObjectId];
+        var wall = objects.Level.walls[intersection.levelObjectId];
         
         if (wall.h1 == wall.h2) {
             return wall.h1;
@@ -256,10 +282,119 @@ Raycaster.Raycasting = function()
         return height;
     }
     
+    // Walls have a start and end Z position
+    // This method calculates the Z pos of a wall at a specific intersection
+    var getWallZ = function(intersection)
+    {
+        var wall = objects.Level.walls[intersection.levelObjectId];
+        
+        if (wall.z1 == wall.z2) {
+            return wall.z1;
+        }
+        
+        var length = getHypotenuseLength(wall.x1 - wall.x2, wall.y1 - wall.y2),
+            slope = (wall.z2 - wall.z1) / length,
+            lengthToIntersection = getHypotenuseLength(wall.x1 - intersection.x, wall.y1 - intersection.y),
+            z = wall.z1 + (lengthToIntersection * slope);
+        
+        return z;
+    }
+    
+    // Find intersection on a specific sprite that is in the players field of view
+    var findSprite = function(angle, spriteId)
+    {
+        // Create a imaginary plane on which the sprite is drawn
+        // That way we can check for sprites in exactly the same way we check for walls
+        var planeAngle = new classes.Angle(angle.degrees - 90),
+            x = level.sprites[spriteId].x,
+            y = level.sprites[spriteId].y,
+            sprite = objects.sprites[level.sprites[spriteId].id],
+            delta = getDeltaXY(planeAngle, (sprite.width - 1) / 2),
+            plane = new classes.Vector(x - delta.x, y + delta.y, 
+                                       x + delta.x, y - delta.y);
+
+        // Find intersection point on the plane
+        var intersection = getIntersection(plane, angle, true);
+        
+        if (intersection) {
+            // Determine which scanline of the sprite image to draw for this intersection
+            var lengthToIntersection = getHypotenuseLength(plane.x1 - intersection.x, plane.y1 - intersection.y);
+            
+            intersection.textureX = Math.floor(lengthToIntersection);
+            intersection.resourceIndex = level.sprites[spriteId].id;
+            intersection.levelObjectId = spriteId;
+            intersection.isSprite = true;
+            
+            // Calculate the drawing parameters for the vertical scanline for this sprite
+            // If the sprite is not visible for the player the method returns false
+            if (!setVSliceDrawParams(intersection)) {
+                return false;
+            }
+        }
+        
+        return intersection;
+    };
+    
+    // Find intersection on a specific wall that is in the players field of view
+    var findWall = function(angle, wallId)
+    {
+        // Find intersection point on current wall
+        var intersection = getIntersection(level.walls[wallId], angle);
+        
+        if (intersection) {
+            intersection.levelObjectId = wallId;
+            setTextureParams(intersection);
+            
+            // Calculate the drawing parameters for the vertical scanline for this wall
+            // If the wall is not visible (elevation is too high or low) the method returns false
+            if (!setVSliceDrawParams(intersection)) {
+                return false;
+            }
+        }
+        
+        return intersection;
+    };
+    
+    
+    /****************** / Public methods / *****************/    
+    // Find intersection for all the walls and sprites that are in viewing range.
+    // Returns an array of intersection objects, sorted descending by distance
+    var findObjects = function(angle, vscan)
+    {
+        var intersections = new Array();
+        
+        if (vscan) {
+            setFishbowlFixValue(vscan);
+        }
+        
+        // Find walls
+        for (var i = 0; i < level.walls.length; i++) {
+            var intersection = findWall(angle, i);
+            if (intersection) {
+                intersections[intersections.length] = intersection;
+            }
+        }
+        
+        // Find sprites
+        for (var i = 0; i < level.sprites.length; i++) {
+            var intersection = findSprite(angle, i);
+            if (intersection) {
+                intersections[intersections.length] = intersection;
+            }
+        }
+        
+        // Sort the objects by distance so that the once further away are drawn first
+        intersections.sort(function(i1, i2) {
+            return i2.distance - i1.distance;
+        });
+        
+        return intersections;
+    };
+    
     // Calculate difference in X and Y for a distance at a specific angle
     var getDeltaXY = function(angle, distance) 
     {
-        return new Raycaster.Classes.Point(
+        return new classes.Point(
             Math.cos(angle.radians) * distance,
             Math.sin(angle.radians) * distance
         );
@@ -267,9 +402,7 @@ Raycaster.Raycasting = function()
     
     // Expose public members
     return {
-        findWalls : findWalls,
-        findSprites: findSprites,
-        getWallHeight: getWallHeight,
-        getDeltaXY: getDeltaXY
+        findObjects : findObjects,
+        getDeltaXY: getDeltaXY,
     };
 }();

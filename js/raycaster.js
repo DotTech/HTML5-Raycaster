@@ -2,8 +2,8 @@
     HTML5 Raycaster Demo
     
     Author:     Ruud van Falier (ruud@dottech.nl)
-    Version:    0.7
-    Released:   14 october 2011
+    Version:    0.8
+    Released:   16 october 2011
     
     Demo:       http://www.dottech.nl/raycaster/
     Git:        https://github.com/Stribe/HTML5-Raycaster

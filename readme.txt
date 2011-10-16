@@ -25,6 +25,8 @@ Optimizations/fixes planned:
 - When drawing a wall slice, remember intersection and use it during sprite rendering to avoid having to search for blocking walls
 - Sprites are not visible behind walls with lower height than the sprite
 
+TODO: getIntersection should check for Z-coord
+
 Revision log:
 (0.2)   - Initial release.
           Uses "wolfenstein" technique to render the world.

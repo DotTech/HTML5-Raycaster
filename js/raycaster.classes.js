@@ -20,9 +20,10 @@ Raycaster.Classes =
     // Class:       Raycaster.Classes.Sprite
     // Description: Parameters that define a sprite in the game world
     */
-    Sprite: function(x, y, id, yoff) {
+    Sprite: function(x, y, z, id, yoff) {
         this.x = x;         // x,y location of sprite in the game world
         this.y = y;
+        this.z = z;
         this.yoff = yoff;   // Offset for Y coordinate, to make it possible to place things on the floor or ceiling
         this.id = id;       // index of sprite image in Constants.spriteFiles array
     },
@@ -31,11 +32,13 @@ Raycaster.Classes =
     // Class:       Raycaster.Classes.Wall
     // Description: Parameters that define a wall in the game world
     */
-    Wall: function(x1, y1, x2, y2, h1, h2, textureId) {
+    Wall: function(x1, y1, x2, y2, z1, z2, h1, h2, textureId) {
         this.x1 = x1;   // x1, y1: wall start point
         this.y1 = y1;
         this.x2 = x2;   // x2, y2: wall end point
         this.y2 = y2;
+        this.z1 = z1;   // wall elevation at start
+        this.z2 = z2;   // wall elevation at end
         this.h1 = h1;   // wall height at start
         this.h2 = h2;   // wall height at end
         this.textureId = textureId; // id (index in Constants.texturesFiles array) of texture to use on this wall
@@ -44,10 +47,11 @@ Raycaster.Classes =
     
     VSliceDrawParams: function() {
         return {
-            dy1: 0,
-            dy2: 0,
-            sy1: 0,
-            sy2: 0
+            dy1: 0,         // Destination start Y coord
+            dy2: 0,         // Destination end Y coord
+            sy1: 0,         // Source image start Y coord
+            sy2: 0,         // Source image end Y coord
+            texture: null,  // Image object containing the texture or sprite to draw
         };
     },
     
@@ -58,7 +62,9 @@ Raycaster.Classes =
             distance: 0,        // Distance to the intersection
             resourceId: 0,      // index of texture or sprite image in Objects namespace
             levelObjectId: 0,   // index of texture or sprite in Objects.Level namespace
-            textureX: 0         // X coordinate of the texture scanline to draw
+            textureX: 0,        // X coordinate of the texture scanline to draw
+            isSprite: false,    // true if intersection if for a sprite, otherwise its for a wall
+            drawParams: null,   // VSliceDrawParams object for this intersection
         };
     },
     

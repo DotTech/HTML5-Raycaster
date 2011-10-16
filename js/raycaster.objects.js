@@ -10,7 +10,9 @@ Raycaster.Objects =
         x: Raycaster.Constants.playerStartPos.x,
         y: Raycaster.Constants.playerStartPos.y,
         z: Raycaster.Constants.playerStartPos.z,
-        angle: new Raycaster.Classes.Angle(Raycaster.Constants.playerStartAngle)
+        angle: new Raycaster.Classes.Angle(Raycaster.Constants.playerStartAngle),
+        height: 48,
+        width: 0,
     },
     
     // Settings checkboxes states

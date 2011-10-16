@@ -68,24 +68,19 @@ Raycaster.RenderEngine = function()
              
             drawing.circle(mapOffsetX + playerX, mapOffsetY + playerY, 3, drawing.colorRgb(255, 0, 0));
             
-            // Visualize the raycasting on the map
+            // Visualize the viewing range on the map
             var angle = new classes.Angle(objects.player.angle.degrees + constants.fieldOfView / 2),
                 rayStep = 10;
             
             for (var i = 0; i < constants.screenWidth; i += rayStep) 
             {
-                var intersections = raycasting.findWalls(angle);
+                var deltaX = Math.floor(Math.cos(angle.radians) * (Math.abs(200) / shrinkFactor)),
+                    deltaY = Math.floor(Math.sin(angle.radians) * (Math.abs(200) / shrinkFactor));
+            
+                drawing.line(mapOffsetX + playerX, mapOffsetY + playerY, 
+                             playerX + deltaX, playerY - deltaY, drawing.colorRgb(200, 200, 0));
                 
-                if (intersections.length > 0) {
-                    var intersection = intersections[intersections.length - 1],
-                        deltaX = Math.floor(Math.cos(angle.radians) * (Math.abs(intersection.distance) / shrinkFactor)),
-                        deltaY = Math.floor(Math.sin(angle.radians) * (Math.abs(intersection.distance) / shrinkFactor));
-                
-                    drawing.line(mapOffsetX + playerX, mapOffsetY + playerY, 
-                                 playerX + deltaX, playerY - deltaY, drawing.colorRgb(200, 200, 0));
-                    
-                    angle.turn(-constants.angleBetweenRays * rayStep);
-                }
+                angle.turn(-constants.angleBetweenRays * rayStep);
             }
         }
     };
@@ -120,18 +115,16 @@ Raycaster.RenderEngine = function()
     // Draws the gradient for the floor
     var drawFloorGradient = function()
     {
-        //if (!objects.settings.renderFloor()) {
-            var context = Raycaster.Objects.context,
-                gradient = context.createLinearGradient(0, constants.screenHeight / 2, 0, constants.screenHeight);
-            
-            gradient.addColorStop(0, drawing.colorRgb(20, 20, 20));
-            gradient.addColorStop(0.25, drawing.colorRgb(40, 40, 40));
-            gradient.addColorStop(0.6, drawing.colorRgb(100, 100, 100));
-            gradient.addColorStop(1, drawing.colorRgb(130, 130, 130));
-            
-            context.fillStyle = gradient;
-            context.fillRect(0, constants.screenHeight / 2, constants.screenWidth, constants.screenHeight / 2);
-        //}
+        var context = Raycaster.Objects.context,
+            gradient = context.createLinearGradient(0, constants.screenHeight / 2, 0, constants.screenHeight);
+        
+        gradient.addColorStop(0, drawing.colorRgb(20, 20, 20));
+        gradient.addColorStop(0.25, drawing.colorRgb(40, 40, 40));
+        gradient.addColorStop(0.6, drawing.colorRgb(100, 100, 100));
+        gradient.addColorStop(1, drawing.colorRgb(130, 130, 130));
+        
+        context.fillStyle = gradient;
+        context.fillRect(0, constants.screenHeight / 2, constants.screenWidth, constants.screenHeight / 2);
     }
     
     // Perform floor casting for scanline
@@ -169,67 +162,55 @@ Raycaster.RenderEngine = function()
     
     /****************** / Core rendering methods (walls, sprites) / *****************/
     
-    // Search for a walls in given direction and draw the vertical scanline for them.
-    // Because of variable wall height, if multiple walls are found they will be drawn on top each other.
-    // Walls furthest from the player are drawn first.
-    var drawWalls = function(vscan, angle)
+    // Search for objects in given direction and draw the vertical scanline for them.
+    // All objects in visible range will be drawn in order of distance.
+    var drawObjects = function(vscan, angle)
     {
-        // Search for intersections with visible walls
-        var intersections = raycasting.findWalls(angle);
+        var intersections = raycasting.findObjects(angle, vscan);
         
         // Draw walls for each found intersection
         for (var i = 0; i < intersections.length; i++) {
             var intersection = intersections[i];
-            
-            // Correction to counter fishbowl effect
-            intersection.distance = fixFishbowlEffect(vscan, intersection.distance);
-            
-            // Calculate what to draw for this scanline
-            var texture = objects.textures[intersection.resourceIndex],
-                height = raycasting.getWallHeight(intersection),
-                wall = level.walls[intersection.levelObjectId]
-                drawParams = calcVSliceDrawParams(vscan, intersection.distance, height, texture, 0, wall.maxHeight);
-            
-            if (objects.settings.renderTextures()) {
-                // Draw wall slice with texture
-                context.drawImage(texture, 
-                                  intersection.textureX, drawParams.sy1, 1, drawParams.sy2 - drawParams.sy1,
-                                  vscan, drawParams.dy1, 1, drawParams.dy2 - drawParams.dy1);
+            if (intersection.isSprite) {
+                drawSprite(vscan, intersection);
             }
             else {
-                // Draw without textures
-                drawing.lineSquare(vscan, drawParams.dy1,  1, drawParams.dy2, drawing.colorRgb(128, 0, 0));
+                drawWall(vscan, intersection);
             }
+        }
+        
+        // Floor casting (still way too slow)
+        //drawFloor(vscan, drawParams.dy2, intersection);
+    }
+    
+
+    var drawWall = function(vscan, intersection)
+    {
+        var drawParams = intersection.drawParams;
             
-            // Make walls in the distance appear darker
-            if (objects.settings.renderLighting() && intersection.distance > constants.startFadingAt) {
-                drawing.lineSquare(vscan, drawParams.dy1, 1, drawParams.dy2, drawing.colorRgba(0, 0, 0, calcDistanceOpacity(intersection.distance)))
-            }
-            
-            // Floor casting (still way too slow)
-            drawFloor(vscan, drawParams.dy2, intersection);
+        if (objects.settings.renderTextures()) {
+            // Draw wall slice with texture
+            context.drawImage(drawParams.texture, 
+                              intersection.textureX, drawParams.sy1, 1, drawParams.sy2 - drawParams.sy1,
+                              vscan, drawParams.dy1, 1, drawParams.dy2 - drawParams.dy1);
+        }
+        else {
+            // Draw without textures
+            drawing.lineSquare(vscan, drawParams.dy1,  1, drawParams.dy2, drawing.colorRgb(128, 0, 0));
+        }
+        
+        // Make walls in the distance appear darker
+        if (objects.settings.renderLighting() && intersection.distance > constants.startFadingAt) {
+            drawing.lineSquare(vscan, drawParams.dy1, 1, drawParams.dy2, drawing.colorRgba(0, 0, 0, calcDistanceOpacity(intersection.distance)))
         }
     }
     
-    // Search for sprites in direction 'angle' and draw the vertical scanline for them
-    var drawSprites = function(vscan, angle)
+    var drawSprite = function(vscan, intersection)
     {
-        // Search for intersections with visible sprites
-        // When multiple sprites are found, they are returned in drawing order (furthest first)
-        var intersections = raycasting.findSprites(angle);
-        
-        // Loop through sprites and check for intersections
-        for (var i = 0; i < intersections.length; i++) {
-            var intersection = intersections[i];
-            
-            // Counter fishbowl effect
-            intersection.distance = fixFishbowlEffect(vscan, intersection.distance);
-            
-            // Calculate what to draw for this scanline
-            var sprite = objects.sprites[intersection.resourceIndex],
-                drawParams = calcVSliceDrawParams(vscan, intersection.distance, sprite.height, sprite, level.sprites[intersection.levelObjectId].yoff, sprite.height);
+        if (objects.settings.renderSprites()) {
+            var drawParams = intersection.drawParams;
                 
-            context.drawImage(sprite, 
+            context.drawImage(drawParams.texture, 
                               intersection.textureX, drawParams.sy1, 1, drawParams.sy2 - drawParams.sy1,
                               vscan, drawParams.dy1, 1, drawParams.dy2 - drawParams.dy1);
 
@@ -266,28 +247,9 @@ Raycaster.RenderEngine = function()
         
         // Render the walls
         for (var vscan = 0; vscan < constants.screenWidth; vscan++)  {
-            drawWalls(vscan, angle);
+            drawObjects(vscan, angle);
             angle.turn(-constants.angleBetweenRays);
         }
-        
-        // Render the sprites
-        if (objects.settings.renderSprites()) {
-            angle = new classes.Angle(objects.player.angle.degrees + constants.fieldOfView / 2);
-            
-            for (var vscan = 0; vscan < constants.screenWidth; vscan++) {
-                drawSprites(vscan, angle);
-                angle.turn(-constants.angleBetweenRays);
-            }
-        }
-    };
-    
-    // Manipulate distance to counter "fishbowl effect"
-    var fixFishbowlEffect = function(vscan, distance)
-    {
-        var distortRemove = new classes.Angle(constants.fieldOfView / 2);
-        distortRemove.turn(-constants.angleBetweenRays * vscan);
-        
-        return distance * Math.cos(distortRemove.radians);
     };
     
     // Calculates the opacity for the black overlay image that is used to make objects in the distance appear darker
@@ -298,93 +260,6 @@ Raycaster.RenderEngine = function()
         
         return parseFloat(1 - 1 / colorDivider);
     };
-    
-    /*
-    // Method:      Raycaster.RenderEngine.calcVSliceDrawParams
-    // Description:
-    //   Once we know the distance to a wall or sprite, this function calculates the parameters 
-    //   that are required to draw the vertical slice for it.
-    //   It also accounts for leaving away pixels of the object if it exceeds the size of the viewport
-    //
-    // Input parameters:
-    // - vscan:             the vertical scanline number
-    // - distance:          distance to object to draw
-    // - objectHeight:      orginal height of the object to draw
-    // - texture:           Image object containing the texture or sprite
-    // - yoff:              Y-offset used for positioning sprites
-    // - objectMaxHeight:   When a wall has angled height (different start/end height),
-    //                      we need to know the maximum height so the textures dont stretch in height
-    //
-    // The following parameters are calculated:
-    // - dy1:   Starting point of the slice on the destination (the screen) 
-    // - dy2:   End point of the slice on the destination
-    // - sy1:   Starting point of the slice on the source (the texture image)
-    // - sy2:   End point of the slice on the source
-    */
-    var calcVSliceDrawParams = function(vscan, distance, objectHeight, texture, yoff, objectMaxHeight)
-    {
-        // Use distance to determine the size of the slice
-        var height = Math.floor(objectHeight / distance * constants.distanceToViewport),
-            params = classes.VSliceDrawParams(),
-            scanlineOffsetY = 0;
-        
-        // scanlineOffsetY offsets the drawing position of the vertical slice.
-        // This is used for sprites that need to be placed at a certain height
-        if (yoff) {
-            // Prepare offset value to be into the horizonOffset calculation
-            scanlineOffsetY = Math.floor(yoff / distance * constants.distanceToViewport);
-        }
-        
-        // horizonOffset is used for aligning walls and objects correctly on the horizon.
-        // Without this value, everything would always be vertically centered.
-        // The correction for scanlineOffsetY (sprite positioning) is accounted for in this value.
-        var horizonOffset = (height - Math.floor((constants.horizonBaseZ + objects.player.z) * 2 / distance * constants.distanceToViewport)) / 2 - scanlineOffsetY;
-        
-        // Determine where to start and end the scanline on the screen
-        var scanlineEndY = parseInt((objects.centerOfScreen.y - horizonOffset) + height / 2),
-            scanlineStartY = scanlineEndY - height;
-        
-        // Prevent the coordinates from being off-screen
-        params.dy1 = scanlineStartY < 0 ? 0 : scanlineStartY;
-        params.dy2 = scanlineEndY > constants.screenHeight ? constants.screenHeight : scanlineEndY;
-        
-        // Now that we've determined the size and location of the scanline,
-        // we calculate which part of the texture image we need to render onto the scanline
-        // When part of the object is located outside of the screen we dont need to copy that part of the texture image.
-        if (objects.settings.renderTextures()) {
-            var scale = height / texture.height,// Height ratio of the object compared to its original size
-                srcStartY = 0,                  // Start Y coord of source image data
-                srcEndY = texture.height;       // End y coord of source image data
-            
-            // Compensate for bottom part being offscreen
-            if (scanlineEndY > constants.screenHeight) {
-                var remove = (scanlineEndY - constants.screenHeight) / scale;
-                srcEndY -= remove;
-            }
-            
-            // Compensate for top part being offscreen
-            if (scanlineStartY < 0) {
-                var remove = Math.abs(scanlineStartY) / scale;
-                srcStartY += remove;
-            }
-            
-            // Prevent the texture from appearing skewed when wall height is angled
-            if (objectMaxHeight > objectHeight) {
-                var maxHeight = Math.floor(objectMaxHeight / distance * constants.distanceToViewport),
-                    diff = Math.abs(maxHeight - height),
-                    scale = maxHeight / texture.height;
-                    
-                srcStartY += Math.floor(diff / scale);
-            }
-            
-            params.sy1 = srcStartY;
-            params.sy2 = srcEndY;
-            
-            return params.sy2 > params.sy1 ? params : false;
-        }
-        
-        return params;
-    }
     
     
     /****************** / Public methods / *****************/

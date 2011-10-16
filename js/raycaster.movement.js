@@ -18,24 +18,13 @@ Raycaster.Movement = function()
             return false;
         }
         
-        var walls = Raycaster.Raycasting.findWalls(angle),
-            sprites = Raycaster.Objects.settings.renderSprites() ? Raycaster.Raycasting.findSprites(angle) : new Array(),
-            wall = false;
+        var objects = Raycaster.Raycasting.findObjects(angle);
         
-        if (walls.length > 0) {
-            wall = walls[walls.length - 1];
+        if (objects.length > 0) {
+            return objects[objects.length - 1];
         }
         
-        if (sprites.length > 0) {
-            var sprite = sprites[sprites.length - 1];
-            
-            // Return intersection closest to player
-            return wall && sprite.distance > wall.distance
-                ? wall
-                : sprite;
-        }
-        
-        return wall;
+        return false;
     }
     
     // Make the player turn by increasing its viewing angle

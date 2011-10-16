@@ -4,7 +4,6 @@
 */
 Raycaster.Constants =
 {
-    horizonBaseZ: 32,       // Base Z value needed to correctly align objects to the horizon when player is on the ground (z=0)
     fieldOfView: 66,        // Field of view of the player (in degrees)
     screenWidth: 640,       // Width of the viewport
     screenHeight: 480,      // Height of the viewport
@@ -12,10 +11,10 @@ Raycaster.Constants =
     movementStep: 9,        // How much the player moves each step
     turningStep: 3,         // How fast the player turns
     startFadingAt: 100,     // At what distance to start fading visibility
-    playerStartAngle: 35,   // Angle player is viewing at on startup
+    playerStartAngle: 0,    // Angle player is viewing at on startup
     playerStartPos: {       // Location of player on startup
-        x: 50,
-        y: 410,
+        x: 80,
+        y: 160,
         z: 0
     },
     distanceToViewport: 0,  // This value is calculated once one startup
