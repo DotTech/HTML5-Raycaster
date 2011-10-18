@@ -5,15 +5,19 @@
 Raycaster.Classes = 
 {
     Point: function(x, y) {
-        this.x = x;
-        this.y = y;
+        return {
+            x: x,
+            y: y
+        };
     },
     
     Vector: function(x1, y1, x2, y2) {
-        this.x1 = x1;
-        this.y1 = y1;
-        this.x2 = x2;
-        this.y2 = y2;
+        return {
+            x1: x1,
+            y1: y1,
+            x2: x2,
+            y2: y2
+        };
     },
     
     /*
@@ -21,11 +25,13 @@ Raycaster.Classes =
     // Description: Parameters that define a sprite in the game world
     */
     Sprite: function(x, y, z, id, yoff) {
-        this.x = x;         // x,y location of sprite in the game world
-        this.y = y;
-        this.z = z;
-        this.yoff = yoff;   // Offset for Y coordinate, to make it possible to place things on the floor or ceiling
-        this.id = id;       // index of sprite image in Constants.spriteFiles array
+        return {
+            x: x,       // x,y location of sprite in the game world
+            y: y,
+            z: z,
+            yoff: yoff, // Offset for Y coordinate, to make it possible to place things on the floor or ceiling
+            id: id      // index of sprite image in Constants.spriteFiles array
+        };
     },
     
     /*
@@ -33,16 +39,18 @@ Raycaster.Classes =
     // Description: Parameters that define a wall in the game world
     */
     Wall: function(x1, y1, x2, y2, z1, z2, h1, h2, textureId) {
-        this.x1 = x1;   // x1, y1: wall start point
-        this.y1 = y1;
-        this.x2 = x2;   // x2, y2: wall end point
-        this.y2 = y2;
-        this.z1 = z1;   // wall elevation at start
-        this.z2 = z2;   // wall elevation at end
-        this.h1 = h1;   // wall height at start
-        this.h2 = h2;   // wall height at end
-        this.textureId = textureId; // id (index in Constants.texturesFiles array) of texture to use on this wall
-        this.maxHeight = h1 > h2 ? h1 : h2;
+        return {
+            x1: x1,   // x1, y1: wall start point
+            y1: y1,
+            x2: x2,   // x2, y2: wall end point
+            y2: y2,
+            z1: z1,   // wall elevation at start
+            z2: z2,   // wall elevation at end
+            h1: h1,   // wall height at start
+            h2: h2,   // wall height at end
+            textureId: textureId, // id (index in Constants.texturesFiles array) of texture to use on this wall
+            maxHeight: (h1 > h2 ? h1: h2)
+        };
     },
     
     /*
@@ -50,9 +58,11 @@ Raycaster.Classes =
     // Description: Defines an elevation in the floor
     */
     Elevation: function(height, area) {
-        this.area = area;       // One Vector defining the size of the elevated area.
-                                // Currently limits to elevations being squared and angled straight
-        this.height = height;   // Height of the elevation
+        return {
+            area: area,     // One Vector defining the size of the elevated area.
+                            // Currently limits to elevations being squared and angled straight
+            height: height  // Height of the elevation
+        };
     },
     
     /*
@@ -65,7 +75,7 @@ Raycaster.Classes =
             dy2: 0,         // Destination end Y coord
             sy1: 0,         // Source image start Y coord
             sy2: 0,         // Source image end Y coord
-            texture: null,  // Image object containing the texture or sprite to draw
+            texture: null   // Image object containing the texture or sprite to draw
         };
     },
     
@@ -78,16 +88,19 @@ Raycaster.Classes =
             levelObjectId: 0,   // index of texture or sprite in Objects.Level namespace
             textureX: 0,        // X coordinate of the texture scanline to draw
             isSprite: false,    // true if intersection if for a sprite, otherwise its for a wall
-            drawParams: null,   // VSliceDrawParams object for this intersection
+            drawParams: null    // VSliceDrawParams object for this intersection
         };
     },
     
     KeyButton: function(code) {
-        this.code = code;
-        this.pressed = false;
+        return {
+            code: code,
+            pressed: false
+        };
     },
     
-    Angle: function(degrees) {        
+    Angle: function(degrees) {
+    
         var self = this;
         this.degrees = degrees;
         this.radians = 0;

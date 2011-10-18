@@ -12,7 +12,7 @@ Raycaster.Objects =
         z: Raycaster.Constants.playerStartPos.z,
         angle: new Raycaster.Classes.Angle(Raycaster.Constants.playerStartAngle),
         height: 48,
-        width: 0,
+        width: 0
     },
     
     // Settings checkboxes states
@@ -40,28 +40,29 @@ Raycaster.Objects =
     
     // Definition of keyboard buttons
     keys: {
-        arrowLeft: new Raycaster.Classes.KeyButton(37),
-        arrowUp: new Raycaster.Classes.KeyButton(38),
-        arrowRight: new Raycaster.Classes.KeyButton(39),
-        arrowDown: new Raycaster.Classes.KeyButton(40),
-        lessThan: new Raycaster.Classes.KeyButton(188),
-        greaterThan: new Raycaster.Classes.KeyButton(190),
-        esc: new Raycaster.Classes.KeyButton(27),
-        shift: new Raycaster.Classes.KeyButton(16),
-        charR: new Raycaster.Classes.KeyButton(82),
-        charA: new Raycaster.Classes.KeyButton(65),
-        charZ: new Raycaster.Classes.KeyButton(90),
-        charQ: new Raycaster.Classes.KeyButton(81),
-        charW: new Raycaster.Classes.KeyButton(87),
-        charE: new Raycaster.Classes.KeyButton(69),
-        charS: new Raycaster.Classes.KeyButton(83),
-        charD: new Raycaster.Classes.KeyButton(68),
-        charX: new Raycaster.Classes.KeyButton(88),
+        arrowLeft: Raycaster.Classes.KeyButton(37),
+        arrowUp: Raycaster.Classes.KeyButton(38),
+        arrowRight: Raycaster.Classes.KeyButton(39),
+        arrowDown: Raycaster.Classes.KeyButton(40),
+        lessThan: Raycaster.Classes.KeyButton(188),
+        greaterThan: Raycaster.Classes.KeyButton(190),
+        esc: Raycaster.Classes.KeyButton(27),
+        shift: Raycaster.Classes.KeyButton(16),
+        charR: Raycaster.Classes.KeyButton(82),
+        charA: Raycaster.Classes.KeyButton(65),
+        charZ: Raycaster.Classes.KeyButton(90),
+        charQ: Raycaster.Classes.KeyButton(81),
+        charW: Raycaster.Classes.KeyButton(87),
+        charE: Raycaster.Classes.KeyButton(69),
+        charS: Raycaster.Classes.KeyButton(83),
+        charD: Raycaster.Classes.KeyButton(68),
+        charX: Raycaster.Classes.KeyButton(88)
     },
     
-    centerOfScreen: new Raycaster.Classes.Point(Raycaster.Constants.screenWidth / 2, Raycaster.Constants.screenHeight / 2),
+    centerOfScreen: Raycaster.Classes.Point(Raycaster.Constants.screenWidth / 2, Raycaster.Constants.screenHeight / 2),
     
     context: null,          // Reference to the canvas context
+    bufferctx: null,
     gameloopInterval: null, // Reference to the interval that triggers the update functions
     redrawScreen: true,     // Wether it is necessary to redraw the scene
     textures: null,         // Array with texture Image objects
@@ -101,5 +102,5 @@ Raycaster.Objects =
         Raycaster.Objects.skyImage.onload = function() {
             Raycaster.Objects.redrawScreen = true;
         };
-    },
+    }
 }

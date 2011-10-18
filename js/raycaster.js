@@ -56,6 +56,8 @@ var Raycaster = function()
         
         // Setup the canvas
         var canvas = document.getElementById(canvasId);
+        canvas.width = Raycaster.Constants.screenWidth;
+        canvas.height = Raycaster.Constants.screenHeight;
         Raycaster.Objects.context = canvas.getContext("2d");
         
         // Call level init (to allow runtime modifications to level)
@@ -93,3 +95,4 @@ var Raycaster = function()
 document.addEventListener("DOMContentLoaded", function() {
     Raycaster.start("raycaster");
 }, true);
+

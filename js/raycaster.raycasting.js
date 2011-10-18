@@ -305,8 +305,8 @@ Raycaster.Raycasting = function()
             y = Raycaster.Objects.Level.sprites[spriteId].y,
             sprite = objects.sprites[Raycaster.Objects.Level.sprites[spriteId].id],
             delta = getDeltaXY(planeAngle, (sprite.width - 1) / 2),
-            plane = new classes.Vector(x - delta.x, y + delta.y, 
-                                       x + delta.x, y - delta.y);
+            plane = classes.Vector(x - delta.x, y + delta.y, 
+                                   x + delta.x, y - delta.y);
 
         // Find intersection point on the plane
         var intersection = getIntersection(plane, angle, true);
@@ -389,7 +389,7 @@ Raycaster.Raycasting = function()
     // Calculate difference in X and Y for a distance at a specific angle
     var getDeltaXY = function(angle, distance) 
     {
-        return new classes.Point(
+        return classes.Point(
             Math.cos(angle.radians) * distance,
             Math.sin(angle.radians) * distance
         );
