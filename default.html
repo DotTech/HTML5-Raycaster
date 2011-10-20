@@ -9,8 +9,7 @@
     
     <link type="text/css" href="css/main.css" rel="stylesheet" />
 
-    <script type="text/javascript" src="js/raycaster.js?version=0.9"></script>
-    <!--script type="text/javascript" src="js/compiled.js"></script-->
+    <script type="text/javascript" src="js/raycaster.js?version=0.9.1"></script>
 </head>
 <body>
 
@@ -22,7 +21,7 @@
             See <a href="readme.txt">readme.txt</a> for more information.<br />
             <br />
             Code is available on <a href="https://github.com/Stribe/HTML5-Raycaster">GitHub</a><br />
-            Old version with grid-based engine still <a href="http://www.dottech.nl/raycaster/v0.3/">available here</a>.<br />
+            Old, simpler, version with grid-based engine still <a href="http://www.dottech.nl/raycaster/v0.3/">available here</a>.<br />
             <br />
             Runs fastest in Chrome or IE9 and pretty slow in FF. Not yet tested in other browsers.<br />
             If you don't see anything, you should update your browser...<br />
@@ -57,14 +56,22 @@
                 <input type="checkbox" id="chkFloor" value="true" />
                 <label for="chkFloor">floorcasting</label>
             </li-->            
-            <li>
+            <li style="clear: left">
                 <label for="ddlLevel">Demo level:&nbsp;</label>
                 <select id="ddlLevel">
                     <option value="0">default</option>
-                    <option value="1">elevation</option>
-                    <option value="2">elevated walls</option>
+                    <option value="1">elevation *</option>
+                    <option value="2">elevated walls *</option>
                 </select>
             </li>
+            <li>
+                <label for="ddlSize">Size:&nbsp;</label>
+                <select id="ddlSize">
+                    <option value="640">640x480</option>
+                    <option value="320">320x240</option>
+                </select>
+            </li>
+            <li>* = contains unfinished features</li>
         </ul>
         
         <div id="keys">
@@ -77,7 +84,7 @@
         </div>
         
         <footer>
-            Version 0.9, created by <a href="http://www.dottech.nl">Ruud van Falier</a> in 2011
+            Version 0.9.1, created by <a href="http://www.dottech.nl">Ruud van Falier</a> in 2011
         </footer>
         
     </div>

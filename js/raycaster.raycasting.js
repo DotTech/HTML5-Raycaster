@@ -203,7 +203,7 @@ Raycaster.Raycasting = function()
             horizonOffset = (height - Math.floor(base / distance * constants.distanceToViewport)) / 2;
         
         // Determine where to start and end the scanline on the screen
-        var scanlineEndY = parseInt((objects.centerOfScreen.y - horizonOffset) + height / 2),
+        var scanlineEndY = parseInt((constants.screenHeight / 2 - horizonOffset) + height / 2),
             scanlineStartY = scanlineEndY - height;
         
         // Prevent the coordinates from being off-screen

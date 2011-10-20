@@ -35,6 +35,38 @@ Raycaster.Objects =
         },
         renderSprites: function() {
             return document.getElementById("chkSprites").checked;
+        },
+        selectedLevel: function() {
+            var selected = 0;
+            
+            if (location.hash) {
+                var settings = location.hash.split("#")[1];
+                var index = parseInt(settings.split(",")[0]);
+                
+                if (index) {
+                    selected = index;
+                }
+            }
+            
+            return selected;
+        },
+        selectedResolution: function() {
+            var selected = { w: 640, h: 480 };
+            
+            if (location.hash) {
+                var settings = location.hash.split("#")[1];
+                var res = parseInt(settings.split(",")[1]);
+                
+                if (res == 320) {
+                    selected = { w: 320, h: 240 };
+                    document.getElementById("ddlSize").selectedIndex = 1;
+                }
+                else {
+                    document.getElementById("ddlSize").selectedIndex = 0;
+                }
+            }
+            
+            return selected;
         }
     },
     
@@ -58,8 +90,6 @@ Raycaster.Objects =
         charD: Raycaster.Classes.KeyButton(68),
         charX: Raycaster.Classes.KeyButton(88)
     },
-    
-    centerOfScreen: Raycaster.Classes.Point(Raycaster.Constants.screenWidth / 2, Raycaster.Constants.screenHeight / 2),
     
     context: null,          // Reference to the canvas context
     bufferctx: null,

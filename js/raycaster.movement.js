@@ -205,8 +205,15 @@ Raycaster.Movement = function()
         document.getElementById("chkSky").addEventListener('change', Raycaster.engine.redraw);
         //document.getElementById("chkFloor").addEventListener('change', Raycaster.engine.redraw);
         document.getElementById("chkSprites").addEventListener('change', Raycaster.engine.redraw);
+        
+        // Level and size selection
         document.getElementById("ddlLevel").addEventListener('change', function() {
-            location.hash = document.getElementById("ddlLevel").selectedIndex;
+            location.hash = document.getElementById("ddlLevel").selectedIndex + "," + Raycaster.Constants.screenWidth;
+            location.reload();
+        });
+        document.getElementById("ddlSize").addEventListener('change', function() {
+            location.hash = document.getElementById("ddlLevel").selectedIndex + "," + 
+                            document.getElementById("ddlSize").options[document.getElementById("ddlSize").selectedIndex].value;
             location.reload();
         });
     };

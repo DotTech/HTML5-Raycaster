@@ -2,8 +2,8 @@
     HTML5 Raycaster Demo
     
     Author:     Ruud van Falier (ruud@dottech.nl)
-    Version:    0.9
-    Released:   16 october 2011
+    Version:    0.9.1
+    Released:   20 october 2011
     
     Demo:       http://www.dottech.nl/raycaster/
     Git:        https://github.com/Stribe/HTML5-Raycaster
@@ -54,6 +54,11 @@ var Raycaster = function()
             Raycaster.Constants.displayDebugInfo = true;
         }
         
+        // Set resolution
+        var res = Raycaster.Objects.settings.selectedResolution();
+        Raycaster.Constants.screenWidth =   res.w;
+        Raycaster.Constants.screenHeight =  res.h;
+        
         // Setup the canvas
         var canvas = document.getElementById(canvasId);
         canvas.width = Raycaster.Constants.screenWidth;
@@ -61,13 +66,10 @@ var Raycaster = function()
         Raycaster.Objects.context = canvas.getContext("2d");
         
         // Call level init (to allow runtime modifications to level)
-        if (location.hash) {
-            var index = parseInt(location.hash.split("#")[1]);
-            if (index) {
-                Raycaster.Objects.Level = demoLevels[index];
-                document.getElementById("ddlLevel").selectedIndex = index;
-            }
-        }
+        var level = Raycaster.Objects.settings.selectedLevel();
+        Raycaster.Objects.Level = demoLevels[level];
+        document.getElementById("ddlLevel").selectedIndex = level;
+        
         Raycaster.Objects.Level.init();
         
         // Load texture and sprite files

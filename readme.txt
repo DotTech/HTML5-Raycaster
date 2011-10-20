@@ -1,8 +1,8 @@
 HTML5 Raycaster Demo
 
 Author:     Ruud van Falier (ruud@dottech.nl)
-Version:    0.9
-Released:   16 october 2011
+Version:    0.9.1
+Released:   20 october 2011
 
 Demo:       http://www.dottech.nl/raycaster/
 Git:        https://github.com/Stribe/HTML5-Raycaster
@@ -18,14 +18,14 @@ Feel free to use it for whatever you need it for.
 
 Planned features:
 - Sectors
-- Support for elevated floors in level
+- Elevated floors definitions should be more flexible
 - Repeating textures (instead of being stretched)
 
 Optimizations/fixes planned:
 - When drawing a wall slice, remember intersection and use it during sprite rendering to avoid having to search for blocking walls
+- Build some kind of intersection buffer, maybe pre-calculate them when loading the level
 - Sprites are not visible behind walls with lower height than the sprite
-
-TODO: getIntersection should check for Z-coord
+- getIntersection should check for Z-coord
 
 Revision log:
 (0.2)   - Initial release.
@@ -61,4 +61,6 @@ Revision log:
           Textures now always stretch in height to fit the wall and repeat over the width.
 (0.9)   - Elevatated area support added (floor rendering not implemented)
         - Demo levels added and level switch implemented
-        
+(0.9.1) - Slight performance tweak.
+        - Added resolution switch with 320x240 option (since 640x480 is quite slow at this point).
+

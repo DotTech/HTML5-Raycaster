@@ -17,10 +17,11 @@ Raycaster.RenderEngine = function()
         raycasting = Raycaster.Raycasting,
         lastFpsUpdate = new Date().getTime();
     
-    // Calculate viewport distance once
-    Raycaster.Constants.distanceToViewport = Math.round(Raycaster.Constants.screenWidth / 2 / Math.tan(Raycaster.Constants.fieldOfView / 2 * (Math.PI / 180)));
+    // Calculate viewport distance and angle between casted rays
+    constants.distanceToViewport = Math.round(constants.screenWidth / 2 / Math.tan(constants.fieldOfView / 2 * (Math.PI / 180)));
+    constants.angleBetweenRays   = parseFloat(constants.fieldOfView / constants.screenWidth);
     
-
+    
     /************* / Rendering of secondary stuff (sky, floor, map) / *****************/
     
     // Writes debug information to the screen
