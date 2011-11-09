@@ -19,7 +19,7 @@ Raycaster.RenderEngine = function()
     
     // Calculate viewport distance and angle between casted rays
     constants.distanceToViewport = Math.round(constants.screenWidth / 2 / Math.tan(constants.fieldOfView / 2 * (Math.PI / 180)));
-    constants.angleBetweenRays   = parseFloat(constants.fieldOfView / constants.screenWidth);
+    constants.angleBetweenRays   = Number(constants.fieldOfView / constants.screenWidth);
     
     
     /************* / Rendering of secondary stuff (sky, floor, map) / *****************/
@@ -253,10 +253,10 @@ Raycaster.RenderEngine = function()
     // Calculates the opacity for the black overlay image that is used to make objects in the distance appear darker
     var calcDistanceOpacity = function(distance) 
     {
-        var colorDivider = parseFloat(distance / (constants.startFadingAt * 1.5)); 
+        var colorDivider = Number(distance / (constants.startFadingAt * 1.5)); 
         colorDivider = (colorDivider > 5) ? 5 : colorDivider;
         
-        return parseFloat(1 - 1 / colorDivider);
+        return Number(1 - 1 / colorDivider);
     };
     
     // Draw 3D representation of the world

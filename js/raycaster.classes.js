@@ -108,7 +108,7 @@ Raycaster.Classes =
         // Set the value of this angle
         // Corrects negative values or values greater than 360 degrees
         this.setValue = function(v) {
-            self.degrees = parseFloat(v);
+            self.degrees = Number(v);
             
             if (self.degrees >= 360) {
                 self.degrees -= 360;
