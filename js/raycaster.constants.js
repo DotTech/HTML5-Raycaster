@@ -7,7 +7,7 @@ Raycaster.Constants =
     fieldOfView: 66,        // Field of view of the player (in degrees)
     screenWidth: 640,       // Width of the viewport
     screenHeight: 480,      // Height of the viewport
-    angleBetweenRays: parseFloat(66 / 640), // Angle between casted rays
+    angleBetweenRays: Number(66 / 640), // Angle between casted rays
     movementStep: 9,        // How much the player moves each step
     turningStep: 3,         // How fast the player turns
     startFadingAt: 100,     // At what distance to start fading visibility
