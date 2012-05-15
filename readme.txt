@@ -7,6 +7,13 @@ Released:   20 october 2011
 Demo:       http://www.dottech.nl/raycaster/
 Git:        https://github.com/Stribe/HTML5-Raycaster
 
+NOTE (15 may 2012): I have discontinued the development on this engine.
+This was my first raycasting engine and it solves some problems in undesirable ways.
+By now i have gotten many new insights on 3D programming and i actually did start developing a entirely new engine at some point, but i never finished to a point that it was worth releasing the code.
+Maybe i will in the future.
+
+
+DESCRIPTION:
 This is a very basic raycasting engine running on a HTML5 canvas.
 Currently supports non-orthogonal walls with variable height,
 texture mapping and sprite rendering.
