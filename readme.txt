@@ -7,9 +7,9 @@ Released:   20 october 2011
 Demo:       http://www.dottech.nl/raycaster/
 Git:        https://github.com/Stribe/HTML5-Raycaster
 
-NOTE (15 may 2012): I have discontinued the development on this engine.
+NOTE (15 may 2012): I have discontinued the development of this engine.
 This was my first raycasting engine and it solves some problems in undesirable ways.
-By now i have gotten many new insights on 3D programming and i actually did start developing a entirely new engine at some point, but i never finished to a point that it was worth releasing the code.
+By now i have gotten many new insights in 3D programming and i actually did start developing an entirely new engine at some point, but i never finished to a point that it was worth releasing the code.
 Maybe i will in the future.
 
 
